@@ -1,0 +1,316 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+@section styles{
+    <style>
+        .header {
+            font-family: sans-serif;
+            color: white;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        .point {
+            font-size: 63px;
+            color: red;
+        }
+
+        .keyword {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 6px 12px;
+            height: 38px;
+            color: black;
+        }
+
+        .search {
+            background-color: red;
+            height: 38px;
+            width: 120px;
+            border-radius: 4px;
+            border: 1px solid red;
+            padding: 3px 12px;
+            margin-left: 5px;
+        }
+
+        .info_box {
+            text-align: center;
+            font-size: 15px;
+            background-color: #121212;
+            margin-top: 40px;
+            padding: 10px 30px 10px 30px;
+            height: 264px;
+        }
+
+            .info_box > .show_edfri {
+                margin-bottom: 10px;
+                border-radius: 8px;
+                background-color: #e9bcbc;
+                font-size: 90px;
+                text-shadow: 6px 6px 0px rgba(0,0,0,0.2);
+            }
+
+            .info_box > p.title {
+                font-weight: bold;
+            }
+
+            .info_box > p.describe {
+                color: #9e9e9e;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+        .info_detail {
+            font-size: 15px;
+            background-color: #121212;
+            margin-top: 40px;
+            padding: 10px 30px 10px 30px;
+            height: 264px;
+            display: flex;
+            align-items: center;
+        }
+
+            .info_detail > .grade {
+                font-size: 120px;
+                text-align: center;
+                color: #e9bcbc;
+            }
+
+            .info_detail > .rule {
+                font-size: 20px;
+                color: #9e9e9e;
+                text-align: left;
+            }
+
+                .info_detail > .rule > ul {
+                    list-style-type: decimal;
+                }
+    </style>
+}
+@section scripts{
+    <script>
+        $(function () {
+            $("input#search").on("click", function () {
+                var keyword = $("input.keyword").val();
+                if (keyword == "") {
+                    alert("請輸入欲查詢代號!!");
+                    $("input.keyword").focus()
+                } else {
+                    $.ajax({
+                        method: "GET",
+                        url: "/Home/queryStock/" + $("input.keyword").val(),
+                        //data: $("input.keyword").val(),
+                        //contentType: "",
+
+                        success: function (data) {
+                            console.log(data);
+                            E_chk(data.resultdt);
+                            D_chk(data.resultdt);
+                            F_chk(data.resultdt);
+                            R_chk(data.resultdt);
+                            I_chk(data.resultdt);
+                        },
+                        error: function (thrownError) {
+                            console.log(thrownError);
+                        }
+                    })
+                }
+
+
+            })
+
+            //第一個變數都要小寫
+            var E_chk = function (dt) {
+                var count = 0;
+                var show = "";
+                for (var i = 0; i < dt.length - 1; i++) {
+                    if (dt[i].eps > dt[i + 1].eps)
+                        count = count + 0.1;
+                    show = show + dt[i].eps + " -> ";
+                }
+                show = show + dt[dt.length - 1].eps;
+                console.log('E:', count);
+                $("div#E_row div.grade").html("+" + count);
+                //$("div#E_row li.show_list").html(show);
+                return count;
+            }
+
+            var D_chk = function (dt) {
+                var count = 0;
+                var dividend_now = 0;
+                var dividend_last = 0
+                for (var i = 0; i < dt.length - 1; i++) {
+                    dividend_now = Math.round(dt[i].dividend / dt[i].eps * 10000) / 100.00;
+                    dividend_last = Math.round(dt[i + 1].dividend / dt[i + 1].eps * 10000) / 100.00;
+                    if (dividend_now > dividend_last && dividend_now < 100)
+                        count++;
+                }
+                console.log('D:', count);
+                $("div#D_row div.grade").html("+" + count);
+                //return count;
+            }
+
+            var F_chk = function (dt) {
+                var count = 0;
+                for (var i = 0; i < dt.length; i++) {
+                    if (dt[i].netCashFlow > 0)
+                        count++;
+                }
+                console.log('F:', count);
+                $("div#F_row div.grade").html("+" + count);
+                //return count;
+            }
+
+            var R_chk = function (dt) {
+                var count = 0;
+                var ROE = 0;
+                for (var i = 0; i < dt.length; i++) {
+                    ROE = Math.round(dt[i].netIncome / dt[i].shareholderEQU * 10000) / 100.00;
+                    if (ROE > 15 && ROE < 30)
+                        count++;
+                }
+                console.log('R:', count);
+                $("div#R_row div.grade").html("+" + count);
+                //return count;
+            }
+
+            var I_chk = function (dt) {
+                var count = 0;
+                var IC = 0;
+                IC = dt[0].netIncome / dt[0].interest;
+                switch (true) {
+                    case IC > 4:
+                        count = 1;
+                        break;
+                    case IC > 10:
+                        count = 0.5;
+                        break;
+                    default:
+                        count = 0;
+                }
+                console.log('I:', count);
+                $("div#I_row div.grade").html("+" + count);
+            }
+
+
+        });
+    </script>
+}
+<div class="header">
+
+    <div class="box point">StockScore <span style="color: white;">Explorer</span></div>
+    <div class="box lead">Search the stock you wanted.</div>
+    <div class="box">
+        <input class="keyword" type="text" name="keyword" id="keyword" placeholder="Keying The Keyword" />
+        <input class="search" type="button" name="search" id="search" value="Search!" />
+    </div>
+
+</div>
+<br />
+<div id="E_row" class="row">
+    <div class="col-md-4 col-xs-6">
+        <div class="info_box">
+            <div class="show_edfri">E</div>
+            <p class="title">- EPS -</p>
+            <p class="describe">EPS每一股淨賺多少錢</p>
+            <div class="detail">@Html.ActionLink("Add Rank", "detail", "Home", new { style = "color:red; text-decoration: underline;" })</div>
+        </div>
+    </div>
+    <div class="col-md-8 col-xs-6">
+        <div class="info_detail row">
+            <div class="grade col-md-4 col-sm-12 col-xs-12">0</div>
+            <div class="rule col-md-8 hidden-sm hidden-xs">
+                <ul>
+                    <li> 該年度大於前年度就加0.1分</li>
+                    <li class="show_list"></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="D_row" class="row">
+    <div class="col-md-4 col-xs-6">
+        <div class="info_box">
+            <div class="show_edfri">D</div>
+            <p class="title">- DIVIDEND -</p>
+            <p class="describe">證明公司已經有錢給你</p>
+            <div class="detail">@Html.ActionLink("Add Rank", "detail", "Home", new { style = "color:red; text-decoration: underline;" })</div>
+        </div>
+    </div>
+    <div class="col-md-8 col-xs-6">
+        <div class="info_detail row">
+            <div class="grade col-md-4 col-sm-12 col-xs-12">0</div>
+            <div class="rule col-md-8 hidden-sm hidden-xs">
+                <ul>
+                    <li></li>
+                    <li></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="F_row" class="row">
+    <div class="col-md-4 col-xs-6">
+        <div class="info_box">
+            <div class="show_edfri">F</div>
+            <p class="title">- Free Cash Flow -</p>
+            <p class="describe">穩定現金流</p>
+            <div class="detail">@Html.ActionLink("Add Rank", "detail", "Home", new { style = "color:red; text-decoration: underline;" })</div>
+        </div>
+    </div>
+    <div class="col-md-8 col-xs-6">
+        <div class="info_detail row">
+            <div class="grade col-md-4 col-sm-12 col-xs-12">0</div>
+            <div class="rule col-md-8 hidden-sm hidden-xs">
+                <ul>
+                    <li></li>
+                    <li></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="R_row" class="row">
+    <div class="col-md-4 col-xs-6">
+        <div class="info_box">
+            <div class="show_edfri">R</div>
+            <p class="title">- ROE -</p>
+            <p class="describe">賺錢的效率</p>
+            <div class="detail">@Html.ActionLink("Add Rank", "detail", "Home", new { style = "color:red; text-decoration: underline;" })</div>
+        </div>
+    </div>
+    <div class="col-md-8 col-xs-6">
+        <div class="info_detail row">
+            <div class="grade col-md-4 col-sm-12 col-xs-12">0</div>
+            <div class="rule col-md-8 hidden-sm hidden-xs">
+                <ul>
+                    <li></li>
+                    <li></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="I_row" class="row">
+    <div class="col-md-4 col-xs-6">
+        <div class="info_box">
+            <div class="show_edfri">I</div>
+            <p class="title">- Interest Coverage -</p>
+            <p class="describe">還債能力</p>
+            <div class="detail">@Html.ActionLink("Add Rank", "detail", "Home", new { style = "color:red; text-decoration: underline;" })</div>
+        </div>
+    </div>
+    <div class="col-md-8 col-xs-6">
+        <div class="info_detail row">
+            <div class="grade col-md-4 col-sm-12 col-xs-12">0</div>
+            <div class="rule col-md-8 hidden-sm hidden-xs">
+                <ul>
+                    <li></li>
+                    <li></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
