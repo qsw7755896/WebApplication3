@@ -20,3 +20,8 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "WebApplication3.dll"]
+
+FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS runtime
+WORKDIR /app
+COPY published/ ./
+ENTRYPOINT ["dotnet", "WebApplication3.dll"]
