@@ -11,6 +11,10 @@
             text-align: center;
         }
 
+        .box {
+            margin-bottom: 10px;
+        }
+
         .point {
             font-size: 63px;
             color: red;
@@ -87,17 +91,42 @@
                 .info_detail > .rule > ul {
                     list-style-type: decimal;
                 }
+
+        .overLoading {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f5f5f5;
+            opacity: 0.5;
+            z-index: 1000;
+        }
+
+        .layoutLoading {
+            display: none;
+            position: absolute;
+            top: 20rem;
+            left: 40%;
+            width: 20%;
+            height: 20%;
+            z-index: 1001;
+            text-align: center;
+        }
     </style>
 }
 @section scripts{
     <script>
         $(function () {
+            showLoading(true);
             $("input#search").on("click", function () {
                 var keyword = $("input.keyword").val();
                 if (keyword == "") {
                     alert("請輸入欲查詢代號!!");
                     $("input.keyword").focus()
                 } else {
+                    showLoading(true);
                     $.ajax({
                         method: "GET",
                         url: "/Home/queryStock/" + $("input.keyword").val(),
@@ -111,6 +140,7 @@
                             F_chk(data.resultdt);
                             R_chk(data.resultdt);
                             I_chk(data.resultdt);
+                            showLoading(false);
                         },
                         error: function (thrownError) {
                             console.log(thrownError);
@@ -124,13 +154,10 @@
             //第一個變數都要小寫
             var E_chk = function (dt) {
                 var count = 0;
-                var show = "";
                 for (var i = 0; i < dt.length - 1; i++) {
                     if (dt[i].eps > dt[i + 1].eps)
-                        count = count + 0.1;
-                    show = show + dt[i].eps + " -> ";
+                        count++;
                 }
-                show = show + dt[dt.length - 1].eps;
                 console.log('E:', count);
                 $("div#E_row div.grade").html("+" + count);
                 //$("div#E_row li.show_list").html(show);
@@ -182,16 +209,26 @@
                 IC = dt[0].netIncome / dt[0].interest;
                 switch (true) {
                     case IC > 4:
-                        count = 1;
+                        count = 10;
                         break;
                     case IC > 10:
-                        count = 0.5;
+                        count = 5;
                         break;
                     default:
                         count = 0;
                 }
                 console.log('I:', count);
                 $("div#I_row div.grade").html("+" + count);
+            }
+
+            function showLoading(show) {
+                if (show) {
+                    document.getElementById("over").style.display = "block";
+                    document.getElementById("layout").style.display = "block";
+                } else {
+                    document.getElementById("over").style.display = "none";
+                    document.getElementById("layout").style.display = "none";
+                }
             }
 
 
@@ -223,8 +260,8 @@
             <div class="grade col-md-4 col-sm-12 col-xs-12">0</div>
             <div class="rule col-md-8 hidden-sm hidden-xs">
                 <ul>
-                    <li> 該年度大於前年度就加0.1分</li>
-                    <li class="show_list"></li>
+                    <li>10年穩定增加EPS</li>
+                    <li>當年度增加就加1</li>
                 </ul>
             </div>
         </div>
@@ -244,8 +281,8 @@
             <div class="grade col-md-4 col-sm-12 col-xs-12">0</div>
             <div class="rule col-md-8 hidden-sm hidden-xs">
                 <ul>
-                    <li></li>
-                    <li></li>
+                    <li>股息/EPS，每年穩定發放股息</li>
+                    <li>當年度增加就加1</li>
                 </ul>
             </div>
         </div>
@@ -265,8 +302,8 @@
             <div class="grade col-md-4 col-sm-12 col-xs-12">0</div>
             <div class="rule col-md-8 hidden-sm hidden-xs">
                 <ul>
-                    <li></li>
-                    <li></li>
+                    <li>10年自由現金流持續為正數</li>
+                    <li>當年度增加就加1</li>
                 </ul>
             </div>
         </div>
@@ -286,8 +323,8 @@
             <div class="grade col-md-4 col-sm-12 col-xs-12">0</div>
             <div class="rule col-md-8 hidden-sm hidden-xs">
                 <ul>
-                    <li></li>
-                    <li></li>
+                    <li>10年ROE股東權益報酬率 > 15%</li>
+                    <li>當年度增加就加1</li>
                 </ul>
             </div>
         </div>
@@ -307,10 +344,13 @@
             <div class="grade col-md-4 col-sm-12 col-xs-12">0</div>
             <div class="rule col-md-8 hidden-sm hidden-xs">
                 <ul>
-                    <li></li>
-                    <li></li>
+                    <li>淨收入/利息，採取最新一年資料</li>
+                    <li>> 10得10分；> 4得5分</li>
                 </ul>
             </div>
         </div>
     </div>
 </div>
+
+<div id="over" class="overLoading"></div>
+<div id="layout" class="layoutLoading"><img src="/Images/loading.gif" /></div>
