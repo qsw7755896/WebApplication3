@@ -25,6 +25,6 @@ namespace WebApplication3.Models
 
         public double Interest { get; set; }  //利息
 
-        public int score { get; set; } //分數
+        public Boolean exist { get; set; } //當年度有沒有資料
     }
 }

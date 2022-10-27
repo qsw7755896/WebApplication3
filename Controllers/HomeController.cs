@@ -48,15 +48,10 @@ namespace WebApplication2.Controllers
 
             for (int i = 0; i < 10; i++)
             {
-                //if (season == 0) {
-                //    season = 4;
-                //    year--;
-                //}
                 if (year == 101)
                     break;
 
-
-                GoodStock queryStock = new GoodStock();  //
+                GoodStock queryStock = new GoodStock();
 
                 queryStock.year = year.ToString();
                 queryStock.Id = id;
@@ -90,6 +85,7 @@ namespace WebApplication2.Controllers
             string result;
             string var_year = yearIN.ToString();
             String var_season = seasonIN.ToString();
+            queryStock.exist = true; // default true
 
             using (var client = new HttpClient())
             {
@@ -152,6 +148,8 @@ namespace WebApplication2.Controllers
                 {
                     case "1":
                         var list = document.QuerySelectorAll(".hasBorder tr").Skip(10 - 1);
+                        if (list.Count() == 0)
+                            queryStock.exist = false;
                         foreach (var item in list)
                         {
                             if (item.TextContent.IndexOf("本期淨利（淨損）") == -1)
@@ -161,7 +159,6 @@ namespace WebApplication2.Controllers
                             else
                             {
                                 result = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
-                                if (result == "") result = "0";
                                 queryStock.NetIncome = Convert.ToDouble(result);
                                 break;
                             }
@@ -177,7 +174,6 @@ namespace WebApplication2.Controllers
                             else
                             {
                                 result = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
-                                if (result == "") result = "0";
                                 queryStock.EPS = Convert.ToDouble(result);
                                 break;
                             }
@@ -187,6 +183,8 @@ namespace WebApplication2.Controllers
 
                     case "2":
                         list = document.QuerySelectorAll(".hasBorder tr").Skip(64 - 1);
+                        if (list.Count() == 0)
+                            queryStock.exist = false;
                         foreach (var item in list)
                         {
                             if (item.TextContent.IndexOf("歸屬於母公司業主之權益合計") == -1)
@@ -196,7 +194,6 @@ namespace WebApplication2.Controllers
                             else
                             {
                                 result = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
-                                if (result == "") result = "0";
                                 queryStock.ShareholderEQU = Convert.ToDouble(result);
                                 break;
                             }
@@ -206,6 +203,8 @@ namespace WebApplication2.Controllers
                     case "3":
                         string num1 = "", num2 = "", num3 = "", num_Interest = "";
                         list = document.QuerySelectorAll(".hasBorder tr").Skip(10 - 1);
+                        if (list.Count() == 0)
+                            queryStock.exist = false;
                         foreach (var item in list)
                         {
                             if (num1 != "" && num2 != "" && num3 != "" && num_Interest != "")
@@ -227,6 +226,8 @@ namespace WebApplication2.Controllers
 
                     case "4":
                         list = document.QuerySelectorAll(".hasBorder tr").Skip(4 - 1);
+                        if (list.Count() == 0)
+                            queryStock.exist = false;
                         foreach (var item in list)
                         {
                             result = item.QuerySelectorAll("td").Skip(11 - 1).FirstOrDefault().TextContent;
