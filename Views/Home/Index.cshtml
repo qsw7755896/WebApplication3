@@ -44,7 +44,7 @@
             background-color: #121212;
             margin-top: 40px;
             padding: 10px 30px 10px 30px;
-            height: 264px;
+            min-height: 264px;
         }
 
             .info_box > .show_edfri {
@@ -71,7 +71,7 @@
             background-color: #121212;
             margin-top: 40px;
             padding: 10px 30px 10px 30px;
-            height: 264px;
+            min-height: 264px;
             display: flex;
             align-items: center;
         }
@@ -224,10 +224,10 @@
                 IC = dt[0].netIncome / dt[0].interest;
                 switch (true) {
                     case IC > 4:
-                        count = 10;
+                        count = 1;
                         break;
                     case IC > 10:
-                        count = 5;
+                        count = 0.5;
                         break;
                     default:
                         count = 0;
