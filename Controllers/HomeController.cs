@@ -36,7 +36,21 @@ namespace WebApplication2.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
-        // GET: /Home/test/2330
+        /**
+         * Subject: 各項指標詳情
+         * Route: GET /Home/detail
+         * Description: 顯示該股票指定指標的數值
+         */
+        public IActionResult detail()
+        {
+            return View();
+        }
+
+        /**
+         * Subject: 找尋欲查詢的股票財報
+         * Route: GET /Home/queryStock/2330
+         * Description: 同步爬蟲公開觀測平台指定資料
+         */
         public async Task<ActionResult> queryStock(string id)
         {
             string stockId = id;
@@ -78,7 +92,12 @@ namespace WebApplication2.Controllers
             //return View();
             return Json(data);
         }
-
+        
+        /**
+         * Subject: 分析dom表
+         * Route: NAN
+         * Description: 使用Angelsharp解析
+         */
         private async Task getDomWithPost(string urlIN, string stockIN, int yearIN, int seasonIN, string dataFlag, GoodStock queryStock)
         {
             string targetUrl = urlIN;

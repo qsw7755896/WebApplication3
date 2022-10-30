@@ -38,6 +38,38 @@
             margin-left: 5px;
         }
 
+        #total_float {
+            position: fixed;
+            top: 80vh;
+            left: 90vw;
+            height: 100px;
+            width: 100px;
+            border-radius: 99%;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            background-color: red
+        }
+
+
+        #total_grade {
+            text-align: center;
+            padding-top: 23px;
+            font-size: 35px;
+            text-decoration: underline;
+        }
+
+        @@media (max-width: 1200px) {
+            #total_float {
+                left: 70vw;
+            }
+
+            .layoutLoading {
+                left: 70vw;
+            }
+        }
+
+
         .info_box {
             text-align: center;
             font-size: 1em;
@@ -106,21 +138,20 @@
         .layoutLoading {
             display: none;
             position: absolute;
-            top: 20rem;
-            left: 40%;
-            width: 20%;
-            height: 20%;
+            top: 30vh;
+            left: 40vw;
+            width: 20vw;
+            height: 20vh;
             z-index: 1001;
             text-align: center;
         }
-
-
 
     </style>
 }
     @section scripts{
     <script>
         $(function () {
+            // register event
             $("input#search").on("click", function () {
                 var keyword = $("input.keyword").val();
                 if (keyword == "") {
@@ -136,11 +167,14 @@
 
                         success: function (data) {
                             console.log(data);
-                            E_chk(data.resultdt);
-                            D_chk(data.resultdt);
-                            F_chk(data.resultdt);
-                            R_chk(data.resultdt);
-                            I_chk(data.resultdt);
+                            var total_grade = 0;
+                            total_grade += E_chk(data.resultdt);
+                            total_grade += D_chk(data.resultdt);
+                            total_grade += F_chk(data.resultdt);
+                            total_grade += R_chk(data.resultdt);
+                            total_grade += I_chk(data.resultdt);
+                            $("#total_float").show();
+                            $("#total_grade").html(total_grade);
                             showLoading(false);
                         },
                         error: function (thrownError) {
@@ -151,8 +185,11 @@
 
 
             })
+
+            // declare variable
             var base = 0;
-            //第一個變數都要小寫
+
+            // define func
             var E_chk = function (dt) {
                 var count = 0;
                 var basecnt = 0
@@ -167,8 +204,9 @@
                 base = basecnt;
                 $("div#E_row div.grade").html("+" + roundDecimal(count / basecnt, 2));
                 //$("div#E_row li.show_list").html(show);
-                return count;
+                return roundDecimal(count / basecnt, 2);
             }
+
             var D_chk = function (dt) {
                 var count = 0;
                 var basecnt = 0
@@ -185,7 +223,7 @@
                 }
                 if (dt[dt.length - 1].exist) basecnt++;
                 $("div#D_row div.grade").html("+" + roundDecimal(count / basecnt, 2));
-                //return count;
+                return roundDecimal(count / basecnt, 2);
             }
 
             var F_chk = function (dt) {
@@ -199,7 +237,7 @@
                     }
                 }
                 $("div#F_row div.grade").html("+" + roundDecimal(count / basecnt, 2));
-                //return count;
+                return roundDecimal(count / basecnt, 2);
             }
 
             var R_chk = function (dt) {
@@ -215,7 +253,7 @@
                     }
                 }
                 $("div#R_row div.grade").html("+" + roundDecimal(count / basecnt, 2));
-                //return count;
+                return roundDecimal(count / basecnt, 2);
             }
 
             var I_chk = function (dt) {
@@ -234,8 +272,19 @@
                 }
                 console.log('I:', count);
                 $("div#I_row div.grade").html("+" + roundDecimal(count / base, 2));
+                return roundDecimal(count / base, 2);
             }
 
+            /**
+             * Subject: 處理js除法錯誤問題
+             */
+            var roundDecimal = function (val, precision) {
+                return Math.round(Math.round(val * Math.pow(10, (precision || 0) + 1)) / 10) / Math.pow(10, (precision || 0));
+            }
+
+            /**
+             * Subject: loading圖示顯示
+             */
             function showLoading(show) {
                 if (show) {
                     document.getElementById("over").style.display = "block";
@@ -246,14 +295,16 @@
                 }
             }
 
-            function print() {
-                const precision = 14;
-                return math.format(value, precision)
+            /**
+             * Subject: 初始化
+             */
+            function init() {
+                $("#total_float").hide();
             }
 
-            let roundDecimal = function (val, precision) {
-                return Math.round(Math.round(val * Math.pow(10, (precision || 0) + 1)) / 10) / Math.pow(10, (precision || 0));
-            }
+
+            // main program start here.
+            init();
 
         });
     </script>
@@ -269,13 +320,16 @@
 
     </div>
     <br />
+    <div id="total_float">
+        <div id="total_grade"></div>
+    </div>
     <div id="E_row" class="row">
         <div class="col-md-4 col-xs-6">
             <div class="info_box">
                 <div class="show_edfri">E</div>
                 <p class="title">- EPS -</p>
                 <p class="describe">EPS每一股淨賺多少錢</p>
-                <div class="detail">@Html.ActionLink("Add Rank", "detail", "Home", new { style = "color:red; text-decoration: underline;" })</div>
+                <div class="detail">@Html.ActionLink("View", "detail", "Home", new { style = "color:red; text-decoration: underline;" })</div>
             </div>
         </div>
         <div class="col-md-8 col-xs-6">
@@ -296,7 +350,7 @@
                 <div class="show_edfri">D</div>
                 <p class="title">- DIVIDEND -</p>
                 <p class="describe">證明公司已經有錢給你</p>
-                <div class="detail">@Html.ActionLink("Add Rank", "detail", "Home", new { style = "color:red; text-decoration: underline;" })</div>
+                <div class="detail">@Html.ActionLink("View", "detail", "Home", new { style = "color:red; text-decoration: underline;" })</div>
             </div>
         </div>
         <div class="col-md-8 col-xs-6">
@@ -317,7 +371,7 @@
                 <div class="show_edfri">F</div>
                 <p class="title">- Free Cash Flow -</p>
                 <p class="describe">穩定現金流</p>
-                <div class="detail">@Html.ActionLink("Add Rank", "detail", "Home", new { style = "color:red; text-decoration: underline;" })</div>
+                <div class="detail">@Html.ActionLink("View", "detail", "Home", new { style = "color:red; text-decoration: underline;" })</div>
             </div>
         </div>
         <div class="col-md-8 col-xs-6">
@@ -338,7 +392,7 @@
                 <div class="show_edfri">R</div>
                 <p class="title">- ROE -</p>
                 <p class="describe">賺錢的效率</p>
-                <div class="detail">@Html.ActionLink("Add Rank", "detail", "Home", new { style = "color:red; text-decoration: underline;" })</div>
+                <div class="detail">@Html.ActionLink("View", "detail", "Home", new { style = "color:red; text-decoration: underline;" })</div>
             </div>
         </div>
         <div class="col-md-8 col-xs-6">
