@@ -1,8 +1,10 @@
-﻿@{
+﻿@model WebApplication3.Models.GoodStocks
+@{
     ViewData["Title"] = "Home Page";
 }
 
 @section styles{
+
     <style>
         .header {
             font-family: sans-serif;
@@ -84,7 +86,7 @@
                 border-radius: 8px;
                 background-color: #e9bcbc;
                 font-size: 5.5em;
-                text-shadow: 6px 6px 0px rgba(0,0,0,0.2);
+                text-shadow: 6px 6px 0px rgba(0, 0, 0, 0.2);
             }
 
             .info_box > p.title {
@@ -123,6 +125,11 @@
                     list-style-type: decimal;
                 }
 
+        a.detail {
+            color: red;
+            text-decoration: underline;
+        }
+
         .overLoading {
             display: none;
             position: absolute;
@@ -145,12 +152,22 @@
             z-index: 1001;
             text-align: center;
         }
-
     </style>
 }
-    @section scripts{
+@section scripts{
     <script>
         $(function () {
+            // declare variable
+            var base = 0;
+            var stockData = {
+                year: [],
+                e_arr: [],
+                d_arr: [],
+                f_arr: [],
+                r_arr: [],
+                i_arr: []
+            };
+
             // register event
             $("input#search").on("click", function () {
                 var keyword = $("input.keyword").val();
@@ -158,7 +175,16 @@
                     alert("請輸入欲查詢代號!!");
                     $("input.keyword").focus()
                 } else {
+                    stockData = {
+                        year: [],
+                        e_arr: [],
+                        d_arr: [],
+                        f_arr: [],
+                        r_arr: [],
+                        i_arr: []
+                    };
                     showLoading(true);
+                    console.log('click search:', new Date())
                     $.ajax({
                         method: "GET",
                         url: "/Home/queryStock/" + $("input.keyword").val(),
@@ -166,6 +192,7 @@
                         //contentType: "",
 
                         success: function (data) {
+                            console.log('result back:', new Date())
                             console.log(data);
                             var total_grade = 0;
                             total_grade += E_chk(data.resultdt);
@@ -174,7 +201,8 @@
                             total_grade += R_chk(data.resultdt);
                             total_grade += I_chk(data.resultdt);
                             $("#total_float").show();
-                            $("#total_grade").html(total_grade);
+                            $("#total_grade").html(roundDecimal(total_grade, 1));
+                            stockData.year.reverse();
                             showLoading(false);
                         },
                         error: function (thrownError) {
@@ -182,54 +210,118 @@
                         }
                     })
                 }
+            })
+            $("a.detail").on("click", function () {
+                var ctx = $("#stockDataChart");
+                var myChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: stockData.year,
+                        datasets: [{
+                            label: $(this).parent().siblings()[1].innerHTML,
+                            data: (function (target) {
+                                console.log(stockData);
+                                switch (target) {
+                                    case 'E':
+                                        return stockData.e_arr;
+                                        break;
+                                    case 'D':
+                                        return stockData.d_arr;
+                                        break;
+                                    case 'F':
+                                        return stockData.f_arr;
+                                        break;
+                                    case 'R':
+                                        return stockData.r_arr;
+                                        break;
+                                    case 'I':
+                                        return stockData.i_arr;
+                                        break;
+                                    default:
+                                        return null;
+                                }
+                            })($(this).parent().siblings()[0].innerHTML),
+                            fill: false,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
 
-
+                });
             })
 
-            // declare variable
-            var base = 0;
-
             // define func
+
+            /**
+             * Subject: EPS calculate
+             * Description: 迴圈計算陣列，當前的數值大於後一個就給1分，再除以總數(有幾筆)
+             */
             var E_chk = function (dt) {
                 var count = 0;
                 var basecnt = 0
                 for (var i = 0; i < dt.length - 1; i++) {
+                    stockData.e_arr.push(dt[i].eps);
                     if (dt[i].exist) {
                         basecnt++;
                         if (dt[i].eps > dt[i + 1].eps)
                             count++;
                     }
                 }
+                stockData.e_arr.push(dt[dt.length - 1].eps);
                 if (dt[dt.length - 1].exist) basecnt++;
                 base = basecnt;
                 $("div#E_row div.grade").html("+" + roundDecimal(count / basecnt, 2));
-                //$("div#E_row li.show_list").html(show);
+                stockData.e_arr.reverse();
                 return roundDecimal(count / basecnt, 2);
             }
 
+            /**
+             * Subject: Diviend calculate
+             * Description: 迴圈計算陣列，當前的數值大於後一個就給1分，再除以總數(有幾筆)
+             */
             var D_chk = function (dt) {
                 var count = 0;
                 var basecnt = 0
                 var dividend_now = 0;
                 var dividend_last = 0
                 for (var i = 0; i < dt.length - 1; i++) {
+                    dividend_now = 0;
+                    dividend_last = 0
                     if (dt[i].exist) {
                         basecnt++;
-                        dividend_now = Math.round(dt[i].dividend / dt[i].eps * 10000) / 100.00;
-                        dividend_last = Math.round(dt[i + 1].dividend / dt[i + 1].eps * 10000) / 100.00;
+                        if (dt[i].eps != 0)
+                            dividend_now = Math.round(dt[i].dividend / dt[i].eps * 10000) / 100.00;
+                        if (dt[i+1].eps != 0)
+                            dividend_last = Math.round(dt[i + 1].dividend / dt[i + 1].eps * 10000) / 100.00;
                         if (dividend_now > dividend_last && dividend_now < 100)
                             count++;
                     }
+                    stockData.d_arr.push(dividend_now);
                 }
+                if (dt[dt.length - 1].eps!=0)
+                    stockData.d_arr.push(Math.round(dt[dt.length - 1].dividend / dt[dt.length - 1].eps * 10000) / 100.00);
                 if (dt[dt.length - 1].exist) basecnt++;
                 $("div#D_row div.grade").html("+" + roundDecimal(count / basecnt, 2));
+                stockData.d_arr.reverse();
                 return roundDecimal(count / basecnt, 2);
             }
 
+            /**
+             * Subject: FreeCachFlow calculate
+             * Description: 迴圈計算陣列，當前的數值大於後一個就給1分，再除以總數(有幾筆)
+             */
             var F_chk = function (dt) {
                 var count = 0;
                 var basecnt = 0
                 for (var i = 0; i < dt.length; i++) {
+                    stockData.f_arr.push(dt[i].netCashFlow);
                     if (dt[i].exist) {
                         basecnt++;
                         if (dt[i].netCashFlow > 0)
@@ -237,15 +329,24 @@
                     }
                 }
                 $("div#F_row div.grade").html("+" + roundDecimal(count / basecnt, 2));
+                stockData.f_arr.reverse();
                 return roundDecimal(count / basecnt, 2);
             }
 
+            /**
+             * Subject: ROE calculate
+             * Description: 迴圈計算陣列，當前的數值大於後一個就給1分，再除以總數(有幾筆)
+             */
             var R_chk = function (dt) {
                 var count = 0;
                 var ROE = 0;
                 var basecnt = 0
                 for (var i = 0; i < dt.length; i++) {
-                    ROE = Math.round(dt[i].netIncome / dt[i].shareholderEQU * 10000) / 100.00;
+                    ROE = 0;
+                    if (dt[i].shareholderEQU != 0)
+                        ROE = Math.round(dt[i].netIncome / dt[i].shareholderEQU * 10000) / 100.00;
+                    stockData.r_arr.push(ROE);
+                    stockData.year.push(dt[i].year);
                     if (dt[i].exist) {
                         basecnt++;
                         if (ROE > 15 && ROE < 30)
@@ -253,9 +354,14 @@
                     }
                 }
                 $("div#R_row div.grade").html("+" + roundDecimal(count / basecnt, 2));
+                stockData.r_arr.reverse();
                 return roundDecimal(count / basecnt, 2);
             }
 
+            /**
+             * Subject: Interest calculate
+             * Description: 淨收入/利息，再除以總數(有幾筆)
+             */
             var I_chk = function (dt) {
                 var count = 0;
                 var IC = 0;
@@ -307,127 +413,160 @@
             init();
 
         });
+
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.0/Chart.min.js"></script>
+
 }
-    <div class="header">
+<div class="header">
 
-        <div class="box point">StockScore <span style="color: white;">Explorer</span></div>
-        <div class="box lead">Search the stock you wanted.</div>
-        <div class="box">
-            <input class="keyword" type="text" name="keyword" id="keyword" placeholder="Keying The Keyword" />
-            <input class="search" type="button" name="search" id="search" value="Search!" />
-        </div>
-
-    </div>
-    <br />
-    <div id="total_float">
-        <div id="total_grade"></div>
-    </div>
-    <div id="E_row" class="row">
-        <div class="col-md-4 col-xs-6">
-            <div class="info_box">
-                <div class="show_edfri">E</div>
-                <p class="title">- EPS -</p>
-                <p class="describe">EPS每一股淨賺多少錢</p>
-                <div class="detail">@Html.ActionLink("View", "detail", "Home", new { style = "color:red; text-decoration: underline;" })</div>
-            </div>
-        </div>
-        <div class="col-md-8 col-xs-6">
-            <div class="info_detail row">
-                <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
-                <div class="rule col-md-6 hidden-sm hidden-xs">
-                    <ul>
-                        <li>10年穩定增加EPS</li>
-                        <li>當年度增加就加1</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div id="D_row" class="row">
-        <div class="col-md-4 col-xs-6">
-            <div class="info_box">
-                <div class="show_edfri">D</div>
-                <p class="title">- DIVIDEND -</p>
-                <p class="describe">證明公司已經有錢給你</p>
-                <div class="detail">@Html.ActionLink("View", "detail", "Home", new { style = "color:red; text-decoration: underline;" })</div>
-            </div>
-        </div>
-        <div class="col-md-8 col-xs-6">
-            <div class="info_detail row">
-                <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
-                <div class="rule col-md-6 hidden-sm hidden-xs">
-                    <ul>
-                        <li>股息/EPS，每年穩定發放股息</li>
-                        <li>當年度增加就加1</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div id="F_row" class="row">
-        <div class="col-md-4 col-xs-6">
-            <div class="info_box">
-                <div class="show_edfri">F</div>
-                <p class="title">- Free Cash Flow -</p>
-                <p class="describe">穩定現金流</p>
-                <div class="detail">@Html.ActionLink("View", "detail", "Home", new { style = "color:red; text-decoration: underline;" })</div>
-            </div>
-        </div>
-        <div class="col-md-8 col-xs-6">
-            <div class="info_detail row">
-                <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
-                <div class="rule col-md-6 hidden-sm hidden-xs">
-                    <ul>
-                        <li>10年自由現金流持續為正數</li>
-                        <li>當年度增加就加1</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div id="R_row" class="row">
-        <div class="col-md-4 col-xs-6">
-            <div class="info_box">
-                <div class="show_edfri">R</div>
-                <p class="title">- ROE -</p>
-                <p class="describe">賺錢的效率</p>
-                <div class="detail">@Html.ActionLink("View", "detail", "Home", new { style = "color:red; text-decoration: underline;" })</div>
-            </div>
-        </div>
-        <div class="col-md-8 col-xs-6">
-            <div class="info_detail row">
-                <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
-                <div class="rule col-md-6 hidden-sm hidden-xs">
-                    <ul>
-                        <li>10年ROE股東權益報酬率 > 15%</li>
-                        <li>當年度增加就加1</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div id="I_row" class="row">
-        <div class="col-md-4 col-xs-6">
-            <div class="info_box">
-                <div class="show_edfri">I</div>
-                <p class="title">- Interest Coverage -</p>
-                <p class="describe">還債能力</p>
-                <div class="detail">@Html.ActionLink("Add Rank", "detail", "Home", new { style = "color:red; text-decoration: underline;" })</div>
-            </div>
-        </div>
-        <div class="col-md-8 col-xs-6">
-            <div class="info_detail row">
-                <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
-                <div class="rule col-md-6 hidden-sm hidden-xs">
-                    <ul>
-                        <li>淨收入/利息，採取最新一年資料</li>
-                        <li>> 10得10分；> 4得5分</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
+    <div class="box point">StockScore <span style="color: white;">Explorer</span></div>
+    <div class="box lead">Search the stock you wanted.</div>
+    <div class="box">
+        <input class="keyword" type="text" name="keyword" id="keyword" placeholder="Keying The Keyword" />
+        <input class="search" type="button" name="search" id="search" value="Search!" />
     </div>
 
-    <div id="over" class="overLoading"></div>
-    <div id="layout" class="layoutLoading"><img src="/Images/loading.gif" /></div>
+</div>
+<br />
+<div id="total_float">
+    <div id="total_grade"></div>
+</div>
+<div id="E_row" class="row">
+    <div class="col-md-4 col-xs-6">
+        <div class="info_box">
+            <div class="show_edfri">E</div>
+            <p class="title">- EPS -</p>
+            <p class="describe">EPS每一股淨賺多少錢</p>
+            <div class="detail">
+                <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">View</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8 col-xs-6">
+        <div class="info_detail row">
+            <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
+            <div class="rule col-md-6 hidden-sm hidden-xs">
+                <ul>
+                    <li>10年穩定增加EPS</li>
+                    <li>當年度增加就加1</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="D_row" class="row">
+    <div class="col-md-4 col-xs-6">
+        <div class="info_box">
+            <div class="show_edfri">D</div>
+            <p class="title">- DIVIDEND -</p>
+            <p class="describe">證明公司已經有錢給你</p>
+            <div class="detail">
+                <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">View</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8 col-xs-6">
+        <div class="info_detail row">
+            <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
+            <div class="rule col-md-6 hidden-sm hidden-xs">
+                <ul>
+                    <li>股息/EPS，每年穩定發放股息</li>
+                    <li>當年度增加就加1</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="F_row" class="row">
+    <div class="col-md-4 col-xs-6">
+        <div class="info_box">
+            <div class="show_edfri">F</div>
+            <p class="title">- Free Cash Flow -</p>
+            <p class="describe">穩定現金流</p>
+            <div class="detail">
+                <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">View</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8 col-xs-6">
+        <div class="info_detail row">
+            <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
+            <div class="rule col-md-6 hidden-sm hidden-xs">
+                <ul>
+                    <li>10年自由現金流持續為正數</li>
+                    <li>當年度增加就加1</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="R_row" class="row">
+    <div class="col-md-4 col-xs-6">
+        <div class="info_box">
+            <div class="show_edfri">R</div>
+            <p class="title">- ROE -</p>
+            <p class="describe">賺錢的效率</p>
+            <div class="detail">
+                <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">View</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8 col-xs-6">
+        <div class="info_detail row">
+            <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
+            <div class="rule col-md-6 hidden-sm hidden-xs">
+                <ul>
+                    <li>10年ROE股東權益報酬率 > 15%</li>
+                    <li>當年度增加就加1</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="I_row" class="row">
+    <div class="col-md-4 col-xs-6">
+        <div class="info_box">
+            <div class="show_edfri">I</div>
+            <p class="title">- Interest Coverage -</p>
+            <p class="describe">還債能力</p>
+            <div class="detail">
+                <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">View</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8 col-xs-6">
+        <div class="info_detail row">
+            <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
+            <div class="rule col-md-6 hidden-sm hidden-xs">
+                <ul>
+                    <li>淨收入/利息，採取最新一年資料</li>
+                    <li>> 10得10分；> 4得5分</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="over" class="overLoading"></div>
+<div id="layout" class="layoutLoading"><img src="/Images/loading.gif" /></div>
+
+<!-- Modal -->
+<div id="detail_Model" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title"></h4>
+            </div>
+            <div class="modal-body">
+                <canvas id="stockDataChart" width="400" height="400"></canvas>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+
+    </div>
+</div>

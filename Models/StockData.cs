@@ -5,12 +5,8 @@ using System.Threading.Tasks;
 
 namespace WebApplication3.Models
 {
-    public class GoodStock
+    public class StockData
     {
-        public string Id { get; set; } //股票代號
-
-        public string Name { get; set; } //公司名稱
-
         public string year { get; set; }
 
         public double EPS { get; set; } //每股盈餘

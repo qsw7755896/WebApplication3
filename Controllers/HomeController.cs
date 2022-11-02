@@ -14,7 +14,9 @@ namespace WebApplication2.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-        private List<GoodStock> stock = new List<GoodStock>();
+        GoodStocks GoodStock = new GoodStocks();
+        
+
         public HomeController(ILogger<HomeController> logger)
         {
             _logger = logger;
@@ -41,7 +43,7 @@ namespace WebApplication2.Controllers
          * Route: GET /Home/detail
          * Description: 顯示該股票指定指標的數值
          */
-        public IActionResult detail()
+        public IActionResult Detail()
         {
             return View();
         }
@@ -58,17 +60,17 @@ namespace WebApplication2.Controllers
             double month = System.DateTime.Today.Month;
             //int season = Convert.ToInt16(Math.Ceiling(month / 3) - 2);  // 先取當季的前兩季
             int season = 4;
-
+            GoodStock.stock = new List<StockData>();
 
             for (int i = 0; i < 10; i++)
             {
                 if (year == 101)
                     break;
 
-                GoodStock queryStock = new GoodStock();
+                StockData queryStock = new StockData();
 
                 queryStock.year = year.ToString();
-                queryStock.Id = id;
+                GoodStock.Id = id;
 
                 // 抓取EPS、淨收入：綜合損益表[基本每股盈餘、本期淨利（淨損）]
                 await getDomWithPost("https://mops.twse.com.tw/mops/web/ajax_t164sb04", stockId, year, season, "1", queryStock);
@@ -83,22 +85,22 @@ namespace WebApplication2.Controllers
                 await getDomWithPost("https://mops.twse.com.tw/mops/web/ajax_t05st09_2", stockId, year, season, "4", queryStock);
 
                 // 新增至model中
-                stock.Add(queryStock);
+                GoodStock.stock.Add(queryStock);
 
                 year--;
                 //season--;
             }
-            object data = new { resultdt = stock };
+            object data = new { resultdt = GoodStock.stock };
             //return View();
             return Json(data);
         }
         
         /**
          * Subject: 分析dom表
-         * Route: NAN
+         * Route: NaN
          * Description: 使用Angelsharp解析
          */
-        private async Task getDomWithPost(string urlIN, string stockIN, int yearIN, int seasonIN, string dataFlag, GoodStock queryStock)
+        private async Task getDomWithPost(string urlIN, string stockIN, int yearIN, int seasonIN, string dataFlag, StockData queryStock)
         {
             string targetUrl = urlIN;
             string result;
