@@ -1,6 +1,6 @@
 ﻿@model WebApplication3.Models.GoodStocks
 @{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Yeee先生找股票";
 }
 
 @section styles{
@@ -157,8 +157,9 @@
 @section scripts{
     <script>
         $(function () {
-            // declare variable
+            /* declare variable area*/
             var base = 0;
+            // 顯示圖表用
             var stockData = {
                 year: [],
                 e_arr: [],
@@ -167,8 +168,10 @@
                 r_arr: [],
                 i_arr: []
             };
+            var myChart;
 
-            // register event
+            /* register event area*/
+            // 搜尋 event
             $("input#search").on("click", function () {
                 var keyword = $("input.keyword").val();
                 if (keyword == "") {
@@ -211,54 +214,42 @@
                     })
                 }
             })
+            // 圖表 event
             $("a.detail").on("click", function () {
-                var ctx = $("#stockDataChart");
-                var myChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: stockData.year,
-                        datasets: [{
-                            label: $(this).parent().siblings()[1].innerHTML,
-                            data: (function (target) {
-                                console.log(stockData);
-                                switch (target) {
-                                    case 'E':
-                                        return stockData.e_arr;
-                                        break;
-                                    case 'D':
-                                        return stockData.d_arr;
-                                        break;
-                                    case 'F':
-                                        return stockData.f_arr;
-                                        break;
-                                    case 'R':
-                                        return stockData.r_arr;
-                                        break;
-                                    case 'I':
-                                        return stockData.i_arr;
-                                        break;
-                                    default:
-                                        return null;
-                                }
-                            })($(this).parent().siblings()[0].innerHTML),
-                            fill: false,
-                            borderColor: 'rgb(75, 192, 192)',
-                            tension: 0.1
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
+                var keyword = $("input.keyword").val();
+                if (keyword == "") {
+                    alert("請先輸入欲查詢代號!!");
+                    $("input.keyword").focus();
+                } else {
+                    myChart.data.labels = stockData.year;
+                    myChart.data.datasets[0].label = $(this).parent().siblings()[1].innerHTML;
+                    myChart.data.datasets[0].data = (function (target) {
+                        console.log(stockData);
+                        switch (target) {
+                            case 'E':
+                                return stockData.e_arr;
+                                break;
+                            case 'D':
+                                return stockData.d_arr;
+                                break;
+                            case 'F':
+                                return stockData.f_arr;
+                                break;
+                            case 'R':
+                                return stockData.r_arr;
+                                break;
+                            case 'I':
+                                return stockData.i_arr;
+                                break;
+                            default:
+                                return null;
                         }
-                    }
-
-                });
+                    })($(this).parent().siblings()[0].innerHTML);
+                    myChart.update();
+                }
             })
 
-            // define func
-
+            /* define func area*/
             /**
              * Subject: EPS calculate
              * Description: 迴圈計算陣列，當前的數值大於後一個就給1分，再除以總數(有幾筆)
@@ -298,14 +289,14 @@
                         basecnt++;
                         if (dt[i].eps != 0)
                             dividend_now = Math.round(dt[i].dividend / dt[i].eps * 10000) / 100.00;
-                        if (dt[i+1].eps != 0)
+                        if (dt[i + 1].eps != 0)
                             dividend_last = Math.round(dt[i + 1].dividend / dt[i + 1].eps * 10000) / 100.00;
                         if (dividend_now > dividend_last && dividend_now < 100)
                             count++;
                     }
                     stockData.d_arr.push(dividend_now);
                 }
-                if (dt[dt.length - 1].eps!=0)
+                if (dt[dt.length - 1].eps != 0)
                     stockData.d_arr.push(Math.round(dt[dt.length - 1].dividend / dt[dt.length - 1].eps * 10000) / 100.00);
                 if (dt[dt.length - 1].exist) basecnt++;
                 $("div#D_row div.grade").html("+" + roundDecimal(count / basecnt, 2));
@@ -376,8 +367,16 @@
                     default:
                         count = 0;
                 }
+                // 另外將歷年的還債能力寫入圖表
+                for (var i = 0; i < dt.length; i++) {
+                    IC = 0;
+                    if (dt[i].interest != 0)
+                        IC = dt[i].netIncome / dt[i].interest;
+                    stockData.i_arr.push(IC);
+                }
                 console.log('I:', count);
                 $("div#I_row div.grade").html("+" + roundDecimal(count / base, 2));
+                stockData.i_arr.reverse();
                 return roundDecimal(count / base, 2);
             }
 
@@ -409,17 +408,37 @@
             }
 
 
-            // main program start here.
+            /* main program start here */
             init();
+            // 預先建立圖表
+            myChart = new Chart($("#stockDataChart"), {
+                type: 'line',
+                data: {
+                    labels: '',
+                    datasets: [{
+                        label: '',
+                        data: [],
+                        fill: false,
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
 
+            });
         });
 
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.0/Chart.min.js"></script>
-
 }
+<!-- 搜尋區塊 -->
 <div class="header">
-
     <div class="box point">StockScore <span style="color: white;">Explorer</span></div>
     <div class="box lead">Search the stock you wanted.</div>
     <div class="box">
@@ -429,9 +448,11 @@
 
 </div>
 <br />
+<!-- 總分顯示 -->
 <div id="total_float">
     <div id="total_grade"></div>
 </div>
+<!-- 分數區塊 -->
 <div id="E_row" class="row">
     <div class="col-md-4 col-xs-6">
         <div class="info_box">
@@ -547,24 +568,23 @@
         </div>
     </div>
 </div>
-
+<!-- loading gif -->
 <div id="over" class="overLoading"></div>
 <div id="layout" class="layoutLoading"><img src="/Images/loading.gif" /></div>
 
 <!-- Modal -->
 <div id="detail_Model" class="modal fade" role="dialog">
     <div class="modal-dialog">
-        <!-- Modal content-->
         <div class="modal-content">
             <div class="modal-header">
+                <h4 class="modal-title" style="color: black">歷年資料</h4>
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h4 class="modal-title"></h4>
             </div>
             <div class="modal-body">
                 <canvas id="stockDataChart" width="400" height="400"></canvas>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
             </div>
         </div>
 

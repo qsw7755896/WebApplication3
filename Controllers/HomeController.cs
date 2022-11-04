@@ -15,7 +15,7 @@ namespace WebApplication2.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         GoodStocks GoodStock = new GoodStocks();
-        
+
 
         public HomeController(ILogger<HomeController> logger)
         {
@@ -57,7 +57,7 @@ namespace WebApplication2.Controllers
         {
             string stockId = id;
             int year = System.DateTime.Today.Year - 1911 - 1;  // 民國年
-            double month = System.DateTime.Today.Month;
+            //double month = System.DateTime.Today.Month;
             //int season = Convert.ToInt16(Math.Ceiling(month / 3) - 2);  // 先取當季的前兩季
             int season = 4;
             GoodStock.stock = new List<StockData>();
@@ -94,7 +94,7 @@ namespace WebApplication2.Controllers
             //return View();
             return Json(data);
         }
-        
+
         /**
          * Subject: 分析dom表
          * Route: NaN
