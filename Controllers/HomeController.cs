@@ -231,6 +231,9 @@ namespace WebApplication2.Controllers
                             if (num1 != "" && num2 != "" && num3 != "" && num_Interest != "")
                             {
                                 queryStock.NetCashFlow = Convert.ToDouble(num1) + Convert.ToDouble(num2) + Convert.ToDouble(num3);
+                                queryStock.OperatingCF = Convert.ToDouble(num1);
+                                queryStock.InvestingCF = Convert.ToDouble(num2);
+                                queryStock.FinancingCF = Convert.ToDouble(num3);
                                 queryStock.Interest = Convert.ToDouble(num_Interest);
                                 break;
                             }

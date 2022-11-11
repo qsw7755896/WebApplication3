@@ -13,7 +13,13 @@ namespace WebApplication3.Models
 
         public double Dividend { get; set; } //現金股利
 
-        public double NetCashFlow { get; set; } //淨現金流
+        public double NetCashFlow { get; set; } //淨自由現金流
+
+        public double OperatingCF { get; set; } //營業現金流
+
+        public double InvestingCF { get; set; } //投資現金流
+
+        public double FinancingCF { get; set; } //融資現金流
 
         public double NetIncome { get; set; } //淨收入
 

@@ -165,6 +165,9 @@
             e_arr: [],
             d_arr: [],
             f_arr: [],
+            ocf_arr: [],
+            icf_arr: [],
+            fcf_arr: [],
             r_arr: [],
             i_arr: []
         };
@@ -184,6 +187,9 @@
                     e_arr: [],
                     d_arr: [],
                     f_arr: [],
+                    ocf_arr: [],
+                    icf_arr: [],
+                    fcf_arr: [],
                     r_arr: [],
                     i_arr: []
                 };
@@ -222,30 +228,89 @@
                 alert("請先輸入欲查詢代號!!");
                 $("input.keyword").focus();
             } else {
+                console.log(stockData);
                 myChart.data.labels = stockData.year;
-                myChart.data.datasets[0].label = $(this).parent().siblings()[1].innerHTML;
-                myChart.data.datasets[0].data = (function (target) {
-                    console.log(stockData);
-                    switch (target) {
-                        case 'E':
-                            return stockData.e_arr;
-                            break;
-                        case 'D':
-                            return stockData.d_arr;
-                            break;
-                        case 'F':
-                            return stockData.f_arr;
-                            break;
-                        case 'R':
-                            return stockData.r_arr;
-                            break;
-                        case 'I':
-                            return stockData.i_arr;
-                            break;
-                        default:
-                            return null;
-                    }
-                })($(this).parent().siblings()[0].innerHTML);
+                switch ($(this).parent().siblings()[0].innerHTML) {
+                    case 'E':
+                        var ds = {
+                            label: 'EPS',
+                            data: stockData.e_arr,
+                            fill: false,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1
+                        };
+                        myChart.data.datasets.push(ds);
+                        break;
+                    case 'D':
+                        var ds = {
+                            label: '殖利率',
+                            data: stockData.d_arr,
+                            fill: false,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1
+                        };
+                        myChart.data.datasets.push(ds);
+                        break;
+                    case 'F':
+                        var ds = {
+                            label: '自由現金流',
+                            data: stockData.f_arr,
+                            fill: false,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1
+                        };
+                        myChart.data.datasets.push(ds);
+                        myChart.update();
+                        ds = {
+                            label: '營業現金流',
+                            data: stockData.ocf_arr,
+                            fill: false,
+                            borderColor: 'rgb(255, 132, 155)',
+                            tension: 0.1
+                        };
+                        myChart.data.datasets.push(ds);
+                        myChart.update();
+                        ds = {
+                            label: '投資現金流',
+                            data: stockData.icf_arr,
+                            fill: false,
+                            borderColor: 'rgb(235, 214, 155)',
+                            tension: 0.1
+                        };
+                        myChart.data.datasets.push(ds);
+                        myChart.update();
+                        ds = {
+                            label: '融資現金流',
+                            data: stockData.fcf_arr,
+                            fill: false,
+                            borderColor: 'rgb(66, 176, 20)',
+                            tension: 0.1
+                        };
+                        myChart.data.datasets.push(ds);
+                        break;
+                    case 'R':
+                        var ds = {
+                            label: '股東權益報酬率',
+                            data: stockData.r_arr,
+                            fill: false,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1
+                        };
+                        myChart.data.datasets.push(ds);
+                        break;
+                    case 'I':
+                        var ds = {
+                            label: '利息保障倍數',
+                            data: stockData.i_arr,
+                            fill: false,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1
+                        };
+                        myChart.data.datasets.push(ds);
+                        break;
+                    default:
+                        return null;
+                }
                 myChart.update();
             }
         })
@@ -264,16 +329,16 @@
             stockData.e_arr.push(dt[0].eps);
             stockData.year.push(dt[0].year);
             for (var i = 1; i < dt.length; i++) {
-                if (dt[i].exist) 
+                if (dt[i].exist)
                     base++;
                 stockData.year.push(dt[i].year);
                 stockData.e_arr.push(dt[i].eps);
                 slope += ((dt[0].eps - dt[i].eps) / (dt[0].year - dt[i].year)) * Weight[parseInt(i / 4)]; // 計算斜率與權重
             }
             if (slope >= 0)
-                $("div#E_row div.grade").html("+" + roundDecimal(slope,2));
+                $("div#E_row div.grade").html("+" + roundDecimal(slope, 2));
             else
-                $("div#E_row div.grade").html(roundDecimal(slope,2));
+                $("div#E_row div.grade").html(roundDecimal(slope, 2));
             stockData.e_arr.reverse();
             return roundDecimal(slope, 2);
         }
@@ -298,10 +363,10 @@
                 slope += ((current - dividend) / (dt[0].year - dt[i].year)) * Weight[parseInt(i / 4)]; // 計算斜率與權重
                 stockData.d_arr.push(dividend);
             }
-            if (slope >= 0) 
-                $("div#D_row div.grade").html("+" + roundDecimal(slope,2));
-            else 
-                $("div#D_row div.grade").html(roundDecimal(slope,2));
+            if (slope >= 0)
+                $("div#D_row div.grade").html("+" + roundDecimal(slope, 2));
+            else
+                $("div#D_row div.grade").html(roundDecimal(slope, 2));
             stockData.d_arr.reverse();
             return roundDecimal(slope, 2);
         }
@@ -314,15 +379,24 @@
         var F_chk = function (dt) {
             var slope = 0
             stockData.f_arr.push(dt[0].netCashFlow);
+            stockData.ocf_arr.push(dt[0].operatingCF);
+            stockData.icf_arr.push(dt[0].investingCF);
+            stockData.fcf_arr.push(dt[0].financingCF);
             for (var i = 1; i < dt.length; i++) {
                 stockData.f_arr.push(dt[i].netCashFlow);
+                stockData.ocf_arr.push(dt[i].operatingCF);
+                stockData.icf_arr.push(dt[i].investingCF);
+                stockData.fcf_arr.push(dt[i].financingCF);
                 slope += ((dt[0].netCashFlow - dt[i].netCashFlow) / (dt[0].year - dt[i].year)) * Weight[parseInt(i / 4)]; // 計算斜率與權重
             }
-            if (slope >= 0 )
+            if (slope >= 0)
                 $("div#F_row div.grade").html("+" + roundDecimal(slope, 2));
             else
                 $("div#F_row div.grade").html(roundDecimal(slope, 2));
             stockData.f_arr.reverse();
+            stockData.ocf_arr.reverse();
+            stockData.icf_arr.reverse();
+            stockData.fcf_arr.reverse();
             return roundDecimal(slope, 2);
         }
 
@@ -420,13 +494,15 @@
             type: 'line',
             data: {
                 labels: '',
-                datasets: [{
-                    label: '',
-                    data: [],
-                    fill: false,
-                    borderColor: 'rgb(75, 192, 192)',
-                    tension: 0.1
-                }]
+                datasets: [
+                    @* {
+                        label: '',
+                        data: [],
+                        fill: false,
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                        } *@
+                ]
             },
             options: {
                 scales: {
