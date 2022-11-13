@@ -165,8 +165,10 @@
             e_arr: [],
             d_arr: [],
             f_arr: [],
-            ocf_arr: [],
-            icf_arr: [],
+            cfr_arr: [],
+            invent_arr: [],
+            cfr1_arr: [],
+            capex_arr: [],
             fcf_arr: [],
             r_arr: [],
             i_arr: []
@@ -187,8 +189,10 @@
                     e_arr: [],
                     d_arr: [],
                     f_arr: [],
-                    ocf_arr: [],
-                    icf_arr: [],
+                    cfr_arr: [],
+                    invent_arr: [],
+                    cfr1_arr: [],
+                    capex_arr: [],
                     fcf_arr: [],
                     r_arr: [],
                     i_arr: []
@@ -228,6 +232,7 @@
                 alert("請先輸入欲查詢代號!!");
                 $("input.keyword").focus();
             } else {
+                myChart.data.datasets = [];
                 console.log(stockData);
                 myChart.data.labels = stockData.year;
                 switch ($(this).parent().siblings()[0].innerHTML) {
@@ -252,41 +257,38 @@
                         myChart.data.datasets.push(ds);
                         break;
                     case 'F':
-                        var ds = {
+                        @* var ds = {
                             label: '自由現金流',
                             data: stockData.f_arr,
                             fill: false,
                             borderColor: 'rgb(75, 192, 192)',
                             tension: 0.1
                         };
-                        myChart.data.datasets.push(ds);
-                        myChart.update();
+                        myChart.data.datasets.push(ds); *@
                         ds = {
-                            label: '營業現金流',
-                            data: stockData.ocf_arr,
+                            label: '現金流量比',
+                            data: stockData.cfr_arr,
                             fill: false,
                             borderColor: 'rgb(255, 132, 155)',
                             tension: 0.1
                         };
                         myChart.data.datasets.push(ds);
-                        myChart.update();
                         ds = {
-                            label: '投資現金流',
-                            data: stockData.icf_arr,
+                            label: '現金流量允當比率',
+                            data: stockData.cfr1_arr,
                             fill: false,
                             borderColor: 'rgb(235, 214, 155)',
                             tension: 0.1
                         };
                         myChart.data.datasets.push(ds);
-                        myChart.update();
-                        ds = {
-                            label: '融資現金流',
+                        @* ds = {
+                            label: '現金再投資比率',
                             data: stockData.fcf_arr,
                             fill: false,
                             borderColor: 'rgb(66, 176, 20)',
                             tension: 0.1
                         };
-                        myChart.data.datasets.push(ds);
+                        myChart.data.datasets.push(ds); *@
                         break;
                     case 'R':
                         var ds = {
@@ -377,26 +379,37 @@
          * Method: 如 E_chk
          */
         var F_chk = function (dt) {
-            var slope = 0
+            var slope = 0;
+            var cf_rate = 0; // 現金流量比率
+            var cf_rate_cur = 0;
+            var cf1_rate = 0; // 現金流量允當比率
+            var cf1_rate_cur = 0;
+            var cf2_rate = 0; // 現金再投資比率
+            var cf2_rate_cur = 0;
             stockData.f_arr.push(dt[0].netCashFlow);
-            stockData.ocf_arr.push(dt[0].operatingCF);
-            stockData.icf_arr.push(dt[0].investingCF);
-            stockData.fcf_arr.push(dt[0].financingCF);
+            cf1_rate_cur = Math.round(dt[0].operatingCF / (dt[0].capex + dt[0].inventory +  dt[0].dividend) * 10000) / 100.00;
+            stockData.cfr1_arr.push(cf1_rate_cur);
+            //stockData.fcf_arr.push(dt[0].financingCF);
+            cf_rate_cur = Math.round(dt[0].operatingCF / dt[0].liabilities * 10000) / 100.00;
+            stockData.cfr_arr.push(cf_rate_cur);
             for (var i = 1; i < dt.length; i++) {
                 stockData.f_arr.push(dt[i].netCashFlow);
-                stockData.ocf_arr.push(dt[i].operatingCF);
-                stockData.icf_arr.push(dt[i].investingCF);
-                stockData.fcf_arr.push(dt[i].financingCF);
-                slope += ((dt[0].netCashFlow - dt[i].netCashFlow) / (dt[0].year - dt[i].year)) * Weight[parseInt(i / 4)]; // 計算斜率與權重
+                cf1_rate = Math.round(dt[i].operatingCF / (dt[i].capex + dt[i].inventory +  dt[i].dividend) * 10000) / 100.00;
+                stockData.cfr1_arr.push(cf1_rate);
+                //stockData.fcf_arr.push(dt[i].financingCF);
+                cf_rate = Math.round(dt[i].operatingCF / dt[i].liabilities * 10000) / 100.00;
+                stockData.cfr_arr.push(cf_rate);
+                @* slope += ((cf_rate_cur - cf_rate) / (dt[0].year - dt[i].year)) * Weight[parseInt(i / 4)]; // 計算斜率與權重
+                console.log(slope); *@
             }
             if (slope >= 0)
                 $("div#F_row div.grade").html("+" + roundDecimal(slope, 2));
             else
                 $("div#F_row div.grade").html(roundDecimal(slope, 2));
             stockData.f_arr.reverse();
-            stockData.ocf_arr.reverse();
-            stockData.icf_arr.reverse();
-            stockData.fcf_arr.reverse();
+            stockData.cfr_arr.reverse();
+            stockData.cfr1_arr.reverse();
+            //stockData.fcf_arr.reverse();
             return roundDecimal(slope, 2);
         }
 
@@ -494,15 +507,7 @@
             type: 'line',
             data: {
                 labels: '',
-                datasets: [
-                    @* {
-                        label: '',
-                        data: [],
-                        fill: false,
-                        borderColor: 'rgb(75, 192, 192)',
-                        tension: 0.1
-                        } *@
-                ]
+                datasets: []
             },
             options: {
                 scales: {
@@ -656,13 +661,13 @@
 <!-- Modal -->
 <div id="detail_Model" class="modal fade" role="dialog">
     <div class="modal-dialog">
-        <div class="modal-content">
+        <div class="modal-content" >
             <div class="modal-header">
                 <h4 class="modal-title" style="color: black">歷年資料</h4>
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
-                <canvas id="stockDataChart" width="400" height="400"></canvas>
+                <canvas id="stockDataChart" width="600px" height="400"></canvas>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
