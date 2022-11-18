@@ -166,10 +166,7 @@
             d_arr: [],
             f_arr: [],
             cfr_arr: [],
-            invent_arr: [],
-            cfr1_arr: [],
-            capex_arr: [],
-            fcf_arr: [],
+            cpx_rate_arr: [],
             r_arr: [],
             i_arr: []
         };
@@ -190,10 +187,7 @@
                     d_arr: [],
                     f_arr: [],
                     cfr_arr: [],
-                    invent_arr: [],
-                    cfr1_arr: [],
-                    capex_arr: [],
-                    fcf_arr: [],
+                    cpx_rate_arr: [],
                     r_arr: [],
                     i_arr: []
                 };
@@ -248,7 +242,7 @@
                         break;
                     case 'D':
                         var ds = {
-                            label: '殖利率',
+                            label: '股息發放率',
                             data: stockData.d_arr,
                             fill: false,
                             borderColor: 'rgb(75, 192, 192)',
@@ -258,37 +252,37 @@
                         break;
                     case 'F':
                         @* var ds = {
-                            label: '自由現金流',
-                            data: stockData.f_arr,
-                            fill: false,
-                            borderColor: 'rgb(75, 192, 192)',
-                            tension: 0.1
-                        };
-                        myChart.data.datasets.push(ds); *@
-                        ds = {
-                            label: '現金流量比',
-                            data: stockData.cfr_arr,
-                            fill: false,
-                            borderColor: 'rgb(255, 132, 155)',
-                            tension: 0.1
+                                label: '自由現金流',
+                                data: stockData.f_arr,
+                                fill: false,
+                                borderColor: 'rgb(75, 192, 192)',
+                                tension: 0.1
+                                };
+                                myChart.data.datasets.push(ds);  *@
+                            ds = {
+                            label: '現金流量比(%)',
+                                data: stockData.cfr_arr,
+                                    fill: false,
+                                        borderColor: 'rgb(255, 132, 155)',
+                                            tension: 0.1
                         };
                         myChart.data.datasets.push(ds);
                         ds = {
-                            label: '現金流量允當比率',
-                            data: stockData.cfr1_arr,
+                            label: '資本支出率(%)',
+                            data: stockData.cpx_rate_arr,
                             fill: false,
                             borderColor: 'rgb(235, 214, 155)',
                             tension: 0.1
                         };
                         myChart.data.datasets.push(ds);
                         @* ds = {
-                            label: '現金再投資比率',
-                            data: stockData.fcf_arr,
-                            fill: false,
-                            borderColor: 'rgb(66, 176, 20)',
-                            tension: 0.1
-                        };
-                        myChart.data.datasets.push(ds); *@
+                                label: '現金再投資比率',
+                                data: stockData.fcf_arr,
+                                fill: false,
+                                borderColor: 'rgb(66, 176, 20)',
+                                tension: 0.1
+                                };
+                                myChart.data.datasets.push(ds); *@
                         break;
                     case 'R':
                         var ds = {
@@ -325,6 +319,7 @@
          *   以最近一年度為基準，計算與各年度之斜率，再配合權重計算
          *   [ 0.3, 0.2, 0.1 ]三年為一區間，以110為最後一年度舉例
          *   110-108 -> 0.3權重 | 107-105 -> 0.2權重 | 104-102 -> 0.1權重
+         *   所以注重的是成長幅度
          */
         var E_chk = function (dt) {
             var slope = 0;
@@ -346,31 +341,60 @@
         }
         /**
          * Subject: Diviend calculate
-         * Description: 股息(利) / eps - 證明公司有給錢
-         * Method: 如 E_chk
+         * Description: 股息(利) / eps - 證明公司有給錢，公司賺多少然後發多少給股東
+         * Method: 注重於是否有平穩，以這基準下去判斷此指標，避免不同公司有所落差
+         *         1. 基本上每年0 < val < 100(沒賺那麼多，卻發那麼多股利)，就先給1分基本分(10分)，
+         *         2. 若有一年幅度超過 +30%則減 1分、 +50%則減 2分，突然發那麼多錢卻沒賺那麼多怪怪的
+         *         3. 計算最高以及最低峰值差距， 20加 3分、 30加 2分、 50分加 1分
          */
         var D_chk = function (dt) {
             var dividend = 0;
-            var slope = 0;
-            var current = Math.round(dt[0].dividend / dt[0].eps * 10000) / 100.00;
-            stockData.d_arr.push(current);
-            for (var i = 1; i < dt.length; i++) {
-                // 計算dividend
-                if (dt[i].eps == 0) dividend = 0;
-                else {
+            var next_dividend = 0;
+            var grade = 0;
+            var maxPeak = 999;
+            var minPeak = 999;
+
+            for (var i = dt.length - 1; i >= 0; i--) {
+                if (dt[i].eps == 0)
+                    dividend = 0;
+                else
                     dividend = Math.round(dt[i].dividend / dt[i].eps * 10000) / 100.00;
-                    // 大於100不正常，賺10元給11元?
-                    if (dividend > 100) dividend = 0;
+
+                // 找出峰值
+                if (maxPeak == 999 || minPeak == 999) {
+                    maxPeak = dividend;
+                    minPeak = dividend;
+                } else {
+                    if (dividend > maxPeak) maxPeak = dividend;
+                    if (dividend < minPeak) minPeak = dividend;
                 }
-                slope += ((current - dividend) / (dt[0].year - dt[i].year)) * Weight[parseInt(i / 4)]; // 計算斜率與權重
+
+                // 介於0~100就給基本分
+                if (dividend > 0 && dividend < 100) grade++;
+
+                if (i != 0) {
+                    next_dividend = Math.round(dt[i - 1].dividend / dt[i - 1].eps * 10000) / 100.00;
+                    if ((next_dividend - dividend) >= 50)  // 大於50%
+                        grade = grade - 2
+                    else if ((next_dividend - dividend) >= 30 && (next_dividend - dividend) < 50)  // 大於30% 小於50%
+                        grade = grade - 1;
+                }
                 stockData.d_arr.push(dividend);
             }
-            if (slope >= 0)
-                $("div#D_row div.grade").html("+" + roundDecimal(slope, 2));
+
+            // 峰值差距
+            if ((maxPeak - minPeak) <= 20)
+                grade = grade + 3;
+            else if ((maxPeak - minPeak) <= 30 && (maxPeak - minPeak) > 20)
+                grade = grade + 2;
+            else if ((maxPeak - minPeak) <= 50 && (maxPeak - minPeak) > 30)
+                grade = grade + 1;
+
+            if (grade >= 0)
+                $("div#D_row div.grade").html("+" + roundDecimal(grade, 2));
             else
-                $("div#D_row div.grade").html(roundDecimal(slope, 2));
-            stockData.d_arr.reverse();
-            return roundDecimal(slope, 2);
+                $("div#D_row div.grade").html(roundDecimal(grade, 2));
+            return roundDecimal(grade, 2);
         }
 
         /**
@@ -379,38 +403,69 @@
          * Method: 如 E_chk
          */
         var F_chk = function (dt) {
-            var slope = 0;
+            var grade = 0;
             var cf_rate = 0; // 現金流量比率
             var cf_rate_cur = 0;
-            var cf1_rate = 0; // 現金流量允當比率
-            var cf1_rate_cur = 0;
-            var cf2_rate = 0; // 現金再投資比率
-            var cf2_rate_cur = 0;
+            var cpx_rate = 0; // 資本支出率
+            var cpx_rate_cur = 0;
+
+            // 淨現金流
             stockData.f_arr.push(dt[0].netCashFlow);
-            cf1_rate_cur = Math.round(dt[0].operatingCF / (dt[0].capex + dt[0].inventory +  dt[0].dividend) * 10000) / 100.00;
-            stockData.cfr1_arr.push(cf1_rate_cur);
-            //stockData.fcf_arr.push(dt[0].financingCF);
+            // 現金流量比率 = 營業活動現金流 / 流動負債
             cf_rate_cur = Math.round(dt[0].operatingCF / dt[0].liabilities * 10000) / 100.00;
             stockData.cfr_arr.push(cf_rate_cur);
+            // 資本支出率 = 營業活動現金流 / 資本支出
+            cpx_rate_cur = Math.round(dt[0].operatingCF / Math.abs(dt[0].capex) * 10000) / 100.00;
+            stockData.cpx_rate_arr.push(cpx_rate_cur);
+
+            // 淨現金流為正數 +1
+            if (dt[0].netCashFlow > 0)
+                grade = grade + 0.2;
+            else
+                grade = grade - 0.2;
+            // 現金流量比率>100% +1
+            if (cf_rate_cur > 100)
+                grade = grade + 0.2;
+            else
+                grade = grade - 0.2;
+            // 資本支出率>100% +1
+            if (cpx_rate_cur > 100)
+                grade = grade + 0.2;
+            else
+                grade = grade - 0.2;
+
             for (var i = 1; i < dt.length; i++) {
                 stockData.f_arr.push(dt[i].netCashFlow);
-                cf1_rate = Math.round(dt[i].operatingCF / (dt[i].capex + dt[i].inventory +  dt[i].dividend) * 10000) / 100.00;
-                stockData.cfr1_arr.push(cf1_rate);
-                //stockData.fcf_arr.push(dt[i].financingCF);
                 cf_rate = Math.round(dt[i].operatingCF / dt[i].liabilities * 10000) / 100.00;
                 stockData.cfr_arr.push(cf_rate);
-                @* slope += ((cf_rate_cur - cf_rate) / (dt[0].year - dt[i].year)) * Weight[parseInt(i / 4)]; // 計算斜率與權重
-                console.log(slope); *@
+                cpx_rate = Math.round(dt[i].operatingCF / Math.abs(dt[i].capex) * 10000) / 100.00;
+                stockData.cpx_rate_arr.push(cpx_rate);
+
+                // 淨現金流為正數 +0.2
+                if (dt[i].netCashFlow > 0)
+                    grade = grade + 0.2;
+                else
+                    grade = grade - 0.2;
+                // 現金流量比率>100% +0.2
+                if (cf_rate > 100)
+                    grade = grade + 0.2;
+                else
+                    grade = grade - 0.2;
+                // 資本支出率>100% +0.2
+                if (cpx_rate > 100)
+                    grade = grade + 0.2;
+                else
+                    grade = grade - 0.2;
             }
-            if (slope >= 0)
-                $("div#F_row div.grade").html("+" + roundDecimal(slope, 2));
+
+            if (grade >= 0)
+                $("div#F_row div.grade").html("+" + roundDecimal(grade, 2));
             else
-                $("div#F_row div.grade").html(roundDecimal(slope, 2));
+                $("div#F_row div.grade").html(roundDecimal(grade, 2));
             stockData.f_arr.reverse();
             stockData.cfr_arr.reverse();
-            stockData.cfr1_arr.reverse();
-            //stockData.fcf_arr.reverse();
-            return roundDecimal(slope, 2);
+            stockData.cpx_rate_arr.reverse();
+            return roundDecimal(grade, 2);
         }
 
         /**
@@ -427,7 +482,7 @@
                 if (dt[i].shareholderEQU == 0) ROE = 0;
                 else {
                     ROE = Math.round(dt[i].netIncome / dt[i].shareholderEQU * 10000) / 100.00;
-                    // 大於100不正常，賺10元給11元?
+                    // 至少要大於15，但不能超過30
                     if (ROE > 30 || ROE < 15) ROE = 0;
                 }
                 stockData.r_arr.push(ROE);
@@ -578,7 +633,7 @@
             <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
             <div class="rule col-md-6 hidden-sm hidden-xs">
                 <ul>
-                    <li>股息/EPS，每年穩定發放股息</li>
+                    <li>股息/EPS 每年穩定發放股息</li>
                     <li>當年度增加就加1</li>
                 </ul>
             </div>
@@ -648,7 +703,7 @@
             <div class="rule col-md-6 hidden-sm hidden-xs">
                 <ul>
                     <li>淨收入/利息，採取最新一年資料</li>
-                    <li>> 10得10分；> 4得5分</li>
+                    <li>> 10得10分 -> 4得5分</li>
                 </ul>
             </div>
         </div>
@@ -661,7 +716,7 @@
 <!-- Modal -->
 <div id="detail_Model" class="modal fade" role="dialog">
     <div class="modal-dialog">
-        <div class="modal-content" >
+        <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title" style="color: black">歷年資料</h4>
                 <button type="button" class="close" data-dismiss="modal">&times;</button>

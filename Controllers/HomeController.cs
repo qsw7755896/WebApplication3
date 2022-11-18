@@ -168,21 +168,23 @@ namespace WebApplication2.Controllers
                 switch (dataFlag)
                 {
                     case "1":
-                        var list = document.QuerySelectorAll(".hasBorder tr").Skip(10 - 1);
+                        var NetIncome = "";
+                        var Revenue = "";
+                        var list = document.QuerySelectorAll(".hasBorder tr").Skip(1 - 1);
                         if (list.Count() == 0)
                             queryStock.exist = false;
                         foreach (var item in list)
-                        {
-                            if (item.TextContent.IndexOf("本期淨利（淨損）") == -1)
-                            {
-                                continue;
-                            }
-                            else
-                            {
-                                result = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
-                                queryStock.NetIncome = Convert.ToDouble(result);
+                        {   
+                            if (Revenue != "" && NetIncome != ""){
+                                queryStock.NetIncome = Convert.ToDouble(NetIncome);
+                                queryStock.Revenue = Convert.ToDouble(Revenue);
                                 break;
                             }
+                            if (item.TextContent.IndexOf("本期淨利（淨損）") != -1)
+                                queryStock.NetIncome = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
+                            if (item.TextContent.IndexOf("營業收入合計") != -1)
+                                queryStock.Revenue = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
+                  
                         }
 
                         list = document.QuerySelectorAll(".hasBorder tr").Skip(40 - 1);
@@ -203,26 +205,22 @@ namespace WebApplication2.Controllers
                         break;
 
                     case "2":
-                        list = document.QuerySelectorAll(".hasBorder tr").Skip(30 - 1);
+                        var liab = "";
+                        var share = "";
+                        list = document.QuerySelectorAll(".hasBorder tr").Skip(20 - 1);
                         if (list.Count() == 0)
                             queryStock.exist = false;
                         foreach (var item in list)
                         {
-                            if (item.TextContent.IndexOf("流動負債合計") == -1){
-
-                            } else
-                            {
-                                result = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
-                                queryStock.Liabilities = Convert.ToDouble(result);
-                            }
-                            if (item.TextContent.IndexOf("歸屬於母公司業主之權益合計") == -1)
-                                continue;
-                            else
-                            {
-                                result = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
-                                queryStock.ShareholderEQU = Convert.ToDouble(result);
+                            if (liab != "" && share != ""){
+                                queryStock.Liabilities = Convert.ToDouble(liab);
+                                queryStock.ShareholderEQU = Convert.ToDouble(share);
                                 break;
                             }
+                            if (item.TextContent.IndexOf("　　流動負債合計") != -1)
+                                liab = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
+                            if (item.TextContent.IndexOf("歸屬於母公司業主之權益合計") != -1)
+                                share = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
                         }
                         break;
 

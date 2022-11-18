@@ -8,6 +8,7 @@ namespace WebApplication3.Models
     public class StockData
     {
         public string year { get; set; }
+        public double Revenue { get; set; } // 營收
         public double EPS { get; set; } //每股盈餘
         public double Dividend { get; set; } //現金股利
         public double NetCashFlow { get; set; } //淨自由現金流
