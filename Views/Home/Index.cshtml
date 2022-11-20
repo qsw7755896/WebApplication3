@@ -251,38 +251,22 @@
                         myChart.data.datasets.push(ds);
                         break;
                     case 'F':
-                        @* var ds = {
-                                label: '自由現金流',
-                                data: stockData.f_arr,
-                                fill: false,
-                                borderColor: 'rgb(75, 192, 192)',
-                                tension: 0.1
-                                };
-                                myChart.data.datasets.push(ds);  *@
-                            ds = {
+                        var ds = {
                             label: '現金流量比(%)',
-                                data: stockData.cfr_arr,
-                                    fill: false,
-                                        borderColor: 'rgb(255, 132, 155)',
-                                            tension: 0.1
+                            data: stockData.cfr_arr,
+                            fill: false,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1
                         };
                         myChart.data.datasets.push(ds);
                         ds = {
                             label: '資本支出率(%)',
                             data: stockData.cpx_rate_arr,
                             fill: false,
-                            borderColor: 'rgb(235, 214, 155)',
+                            borderColor: 'rgb(255, 132, 155)',
                             tension: 0.1
                         };
                         myChart.data.datasets.push(ds);
-                        @* ds = {
-                                label: '現金再投資比率',
-                                data: stockData.fcf_arr,
-                                fill: false,
-                                borderColor: 'rgb(66, 176, 20)',
-                                tension: 0.1
-                                };
-                                myChart.data.datasets.push(ds); *@
                         break;
                     case 'R':
                         var ds = {
@@ -290,6 +274,14 @@
                             data: stockData.r_arr,
                             fill: false,
                             borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1
+                        };
+                        myChart.data.datasets.push(ds);
+                        ds = {
+                            label: 'EPS',
+                            data: stockData.e_arr,
+                            fill: false,
+                            borderColor: 'rgb(255, 132, 155)',
                             tension: 0.1
                         };
                         myChart.data.datasets.push(ds);
@@ -310,12 +302,26 @@
                 myChart.update();
             }
         })
+        // 總分 event
+        //$("div#total_float").on("click",function () {
+        //     $.ajax({
+        //            method: "GET",
+        //            url: "/Home/Detail",
+        //            //data: $("input.keyword").val(),
+        //            //contentType: "",
+
+                    
+        //            error: function (thrownError) {
+        //                console.log(thrownError);
+        //            }
+        //        })           
+        //})
 
         /* define func area*/
         /**
          * Subject: EPS calculate
-         * Description: 稅後淨利 / 在外流通股票 - eps 資料分析
-         * Method: 
+         * Method: 稅後淨利 / 在外流通股票 - eps 資料分析
+         * Description: 
          *   以最近一年度為基準，計算與各年度之斜率，再配合權重計算
          *   [ 0.3, 0.2, 0.1 ]三年為一區間，以110為最後一年度舉例
          *   110-108 -> 0.3權重 | 107-105 -> 0.2權重 | 104-102 -> 0.1權重
@@ -339,13 +345,15 @@
             stockData.e_arr.reverse();
             return roundDecimal(slope, 2);
         }
+
         /**
          * Subject: Diviend calculate
-         * Description: 股息(利) / eps - 證明公司有給錢，公司賺多少然後發多少給股東
-         * Method: 注重於是否有平穩，以這基準下去判斷此指標，避免不同公司有所落差
-         *         1. 基本上每年0 < val < 100(沒賺那麼多，卻發那麼多股利)，就先給1分基本分(10分)，
-         *         2. 若有一年幅度超過 +30%則減 1分、 +50%則減 2分，突然發那麼多錢卻沒賺那麼多怪怪的
-         *         3. 計算最高以及最低峰值差距， 20加 3分、 30加 2分、 50分加 1分
+         * Method: 股息(利) / eps - 證明公司有給錢，公司賺多少然後發多少給股東
+         * Description: 
+         *      注重於是否有平穩，以這基準下去判斷此指標，避免不同公司有所落差
+         *      1. 基本上每年0 < val < 100(沒賺那麼多，卻發那麼多股利)，就先給1分基本分(10分)，
+         *      2. 若有一年幅度超過 +30%則減 1分、 +50%則減 2分，突然發那麼多錢卻沒賺那麼多怪怪的
+         *      3. 計算最高以及最低峰值差距， 20加 3分、 30加 2分、 50分加 1分
          */
         var D_chk = function (dt) {
             var dividend = 0;
@@ -399,8 +407,10 @@
 
         /**
          * Subject: FreeCachFlow calculate
-         * Description: 穩定淨現金流向上
-         * Method: 如 E_chk
+         * Method: 穩定淨現金流向上 - 現金流量比、資本支出率
+         * Description: 
+         *      注重現金流是否為正數，並利用現金流量比以及資本支出率評斷
+         *      淨現金流應 > 0 ，則加1，則另兩種比率應都大於100%
          */
         var F_chk = function (dt) {
             var grade = 0;
@@ -420,19 +430,19 @@
 
             // 淨現金流為正數 +1
             if (dt[0].netCashFlow > 0)
-                grade = grade + 0.2;
+                grade++;
             else
-                grade = grade - 0.2;
+                grade--;
             // 現金流量比率>100% +1
             if (cf_rate_cur > 100)
-                grade = grade + 0.2;
+                grade++;
             else
-                grade = grade - 0.2;
+                grade--;
             // 資本支出率>100% +1
             if (cpx_rate_cur > 100)
-                grade = grade + 0.2;
+                grade++;
             else
-                grade = grade - 0.2;
+                grade--;
 
             for (var i = 1; i < dt.length; i++) {
                 stockData.f_arr.push(dt[i].netCashFlow);
@@ -443,19 +453,19 @@
 
                 // 淨現金流為正數 +0.2
                 if (dt[i].netCashFlow > 0)
-                    grade = grade + 0.2;
+                    grade++;
                 else
-                    grade = grade - 0.2;
+                    grade--;
                 // 現金流量比率>100% +0.2
                 if (cf_rate > 100)
-                    grade = grade + 0.2;
+                    grade++;
                 else
-                    grade = grade - 0.2;
+                    grade--;
                 // 資本支出率>100% +0.2
                 if (cpx_rate > 100)
-                    grade = grade + 0.2;
+                    grade++;
                 else
-                    grade = grade - 0.2;
+                    grade--;
             }
 
             if (grade >= 0)
@@ -470,61 +480,103 @@
 
         /**
          * Subject: ROE calculate
-         * Description: 淨收入 / 股東權益 - ROE資料分析
-         * Method: 如 E_chk
+         * Method: 淨收入 / 股東權益 - ROE資料分析
+         * Description: 
+         *      ROE賺錢效率必須處於15~30之間，以這為基準判斷每年的ROE是否在此範圍
+         *      在計算ROE是否有穩定成長，以相鄰兩年計算斜率，並加總計算10年的成長率。
          */
         var R_chk = function (dt) {
             var ROE = 0;
-            var slope = 0
+            var prev_ROE = 0;
+            var slope = 0;
+            var grade = 0;
             var current = Math.round(dt[0].netIncome / dt[0].shareholderEQU * 10000) / 100.00;
             stockData.r_arr.push(current);
-            for (var i = 1; i < dt.length; i++) {
-                if (dt[i].shareholderEQU == 0) ROE = 0;
-                else {
-                    ROE = Math.round(dt[i].netIncome / dt[i].shareholderEQU * 10000) / 100.00;
-                    // 至少要大於15，但不能超過30
-                    if (ROE > 30 || ROE < 15) ROE = 0;
-                }
-                stockData.r_arr.push(ROE);
-                slope += ((current - ROE) / (dt[0].year - dt[i].year)) * Weight[parseInt(i / 4)]; // 計算斜率與權重
-            }
-            if (slope >= 0)
-                $("div#R_row div.grade").html("+" + roundDecimal(slope, 2));
+
+            if (current > 15 && current < 30) 
+                grade++;
             else
-                $("div#R_row div.grade").html(roundDecimal(slope, 2));
+                grade--;
+
+            for (var i = 1; i < dt.length; i++) {
+                if (dt[i].shareholderEQU == 0) 
+                    ROE = 0;
+                else 
+                    ROE = Math.round(dt[i].netIncome / dt[i].shareholderEQU * 10000) / 100.00;
+                    
+                stockData.r_arr.push(ROE);
+
+                // 至少要大於15，但不能超過30
+                if (ROE < 30 && ROE > 15) 
+                    grade++;
+                else 
+                    grade--;
+
+                if (i == 1)
+                    slope += (current - ROE); // 計算斜率
+                else
+                    slope += (prev_ROE - ROE); // 計算斜率
+                
+                prev_ROE = ROE;
+            }
+
+            if (slope > 0) grade++;
+
+            if (grade >= 0)
+                $("div#R_row div.grade").html("+" + grade);
+            else
+                $("div#R_row div.grade").html(grade);
             stockData.r_arr.reverse();
-            return roundDecimal(slope, 2);
+            return roundDecimal(grade, 2);
         }
 
         /**
          * Subject: Interest calculate
-         * Description: 淨收入/利息，再除以總數(有幾筆)
+         * Method: 淨收入/利息，計算利息保障倍數
+         * Description: 
+         *      只計算最近這一年的利息保障倍數，然後確認是否有往下趨勢
+         *      使用最近這一年下去比對前幾年的數值，小於0則減1。
          */
         var I_chk = function (dt) {
-            var count = 0;
+            var grade = 0;
             var IC = 0;
+            var IC_curr = 0;
+            var slope = 0;
+            // 只計算當年度的
             IC = dt[0].netIncome / dt[0].interest;
             switch (true) {
-                case IC > 4:
-                    count = 1;
-                    break;
                 case IC > 10:
-                    count = 0.5;
+                    grade = 1;
                     break;
+                case IC > 4:
+                    grade = 0.5;
+                    break;
+                case IC < 0:
+                    grade = -1;
                 default:
-                    count = 0;
+                    grade = 0;
             }
+            IC_curr = IC;
+            stockData.i_arr.push(IC_curr);
+
             // 另外將歷年的還債能力寫入圖表
-            for (var i = 0; i < dt.length; i++) {
+            for (var i = 1; i < dt.length; i++) {
                 IC = 0;
                 if (dt[i].interest != 0)
                     IC = dt[i].netIncome / dt[i].interest;
                 stockData.i_arr.push(IC);
+                // 計算斜率
+                slope += ((IC_curr - IC) / (dt[0].year - dt[i].year)) * Weight[parseInt(i / 4)]; // 計算斜率與權重
             }
-            console.log('I:', count);
-            $("div#I_row div.grade").html("+" + roundDecimal(count / base, 2));
+
+            if (slope < 0) grade--;
+
+            if (grade >= 0)
+                $("div#I_row div.grade").html("+" + roundDecimal(grade, 2));
+            else
+                $("div#I_row div.grade").html(roundDecimal(grade, 2));
             stockData.i_arr.reverse();
-            return roundDecimal(count / base, 2);
+            return roundDecimal(grade, 2);
         }
 
         /**
@@ -589,125 +641,133 @@
 
 </div>
 <br />
+
+@Html.ActionLink("detail1","Detail")
 <!-- 總分顯示 -->
 <div id="total_float">
-    <div id="total_grade"></div>
+    <div id="total_grade" data-toggle="modal" data-target="#list_Model"></div>
 </div>
 <!-- 分數區塊 -->
-<div id="E_row" class="row">
-    <div class="col-md-4 col-xs-6">
-        <div class="info_box">
-            <div class="show_edfri">E</div>
-            <p class="title">- EPS -</p>
-            <p class="describe">EPS每一股淨賺多少錢</p>
-            <div class="detail">
-                <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">View</a>
+<div id="grade_block">
+    <div id="E_row" class="row">
+        <div class="col-md-4 col-xs-6">
+            <div class="info_box">
+                <div class="show_edfri">E</div>
+                <p class="title">- EPS -</p>
+                <p class="describe">EPS每一股淨賺多少錢</p>
+                <div class="detail">
+                    <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">圖表</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8 col-xs-6">
+            <div class="info_detail row">
+                <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
+                <div class="rule col-md-6 hidden-sm hidden-xs">
+                    <ul>
+                        <li>能否穩定增加EPS</li>
+                        <li>以近年增長幅度為主</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-8 col-xs-6">
-        <div class="info_detail row">
-            <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
-            <div class="rule col-md-6 hidden-sm hidden-xs">
-                <ul>
-                    <li>10年穩定增加EPS</li>
-                    <li>當年度增加就加1</li>
-                </ul>
+    <div id="D_row" class="row">
+        <div class="col-md-4 col-xs-6">
+            <div class="info_box">
+                <div class="show_edfri">D</div>
+                <p class="title">- DIVIDEND -</p>
+                <p class="describe">證明公司已經有錢給你</p>
+                <div class="detail">
+                    <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">圖表</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8 col-xs-6">
+            <div class="info_detail row">
+                <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
+                <div class="rule col-md-6 hidden-sm hidden-xs">
+                    <ul>
+                        <li>股息/EPS 能否穩定發放股息</li>
+                        <li>應避免快速成長及減緩</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="F_row" class="row">
+        <div class="col-md-4 col-xs-6">
+            <div class="info_box">
+                <div class="show_edfri">F</div>
+                <p class="title">- Free Cash Flow -</p>
+                <p class="describe">穩定現金流</p>
+                <div class="detail">
+                    <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">圖表</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8 col-xs-6">
+            <div class="info_detail row">
+                <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
+                <div class="rule col-md-6 hidden-sm hidden-xs">
+                    <ul>
+                        <li>自由現金流持續能否為正數</li>
+                        <li>營業用現金能否負擔支出</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="R_row" class="row">
+        <div class="col-md-4 col-xs-6">
+            <div class="info_box">
+                <div class="show_edfri">R</div>
+                <p class="title">- ROE -</p>
+                <p class="describe">賺錢的效率</p>
+                <div class="detail">
+                    <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">圖表</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8 col-xs-6">
+            <div class="info_detail row">
+                <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
+                <div class="rule col-md-6 hidden-sm hidden-xs">
+                    <ul>
+                        <li>ROE應介於15% ~ 30%</li>
+                        <li>能否穩定成長</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="I_row" class="row">
+        <div class="col-md-4 col-xs-6">
+            <div class="info_box">
+                <div class="show_edfri">I</div>
+                <p class="title">- Interest Coverage -</p>
+                <p class="describe">還債能力</p>
+                <div class="detail">
+                    <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">圖表</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8 col-xs-6">
+            <div class="info_detail row">
+                <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
+                <div class="rule col-md-6 hidden-sm hidden-xs">
+                    <ul>
+                        <li>淨收入/利息，利息保障倍數採納最近一年計算</li>
+                        <li>呈現下降則該注意!</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
 </div>
-<div id="D_row" class="row">
-    <div class="col-md-4 col-xs-6">
-        <div class="info_box">
-            <div class="show_edfri">D</div>
-            <p class="title">- DIVIDEND -</p>
-            <p class="describe">證明公司已經有錢給你</p>
-            <div class="detail">
-                <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">View</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-8 col-xs-6">
-        <div class="info_detail row">
-            <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
-            <div class="rule col-md-6 hidden-sm hidden-xs">
-                <ul>
-                    <li>股息/EPS 每年穩定發放股息</li>
-                    <li>當年度增加就加1</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
-<div id="F_row" class="row">
-    <div class="col-md-4 col-xs-6">
-        <div class="info_box">
-            <div class="show_edfri">F</div>
-            <p class="title">- Free Cash Flow -</p>
-            <p class="describe">穩定現金流</p>
-            <div class="detail">
-                <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">View</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-8 col-xs-6">
-        <div class="info_detail row">
-            <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
-            <div class="rule col-md-6 hidden-sm hidden-xs">
-                <ul>
-                    <li>10年自由現金流持續為正數</li>
-                    <li>當年度增加就加1</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
-<div id="R_row" class="row">
-    <div class="col-md-4 col-xs-6">
-        <div class="info_box">
-            <div class="show_edfri">R</div>
-            <p class="title">- ROE -</p>
-            <p class="describe">賺錢的效率</p>
-            <div class="detail">
-                <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">View</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-8 col-xs-6">
-        <div class="info_detail row">
-            <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
-            <div class="rule col-md-6 hidden-sm hidden-xs">
-                <ul>
-                    <li>10年ROE股東權益報酬率 > 15%</li>
-                    <li>當年度增加就加1</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
-<div id="I_row" class="row">
-    <div class="col-md-4 col-xs-6">
-        <div class="info_box">
-            <div class="show_edfri">I</div>
-            <p class="title">- Interest Coverage -</p>
-            <p class="describe">還債能力</p>
-            <div class="detail">
-                <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">View</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-8 col-xs-6">
-        <div class="info_detail row">
-            <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
-            <div class="rule col-md-6 hidden-sm hidden-xs">
-                <ul>
-                    <li>淨收入/利息，採取最新一年資料</li>
-                    <li>> 10得10分 -> 4得5分</li>
-                </ul>
-            </div>
-        </div>
-    </div>
+<!-- 列表區塊 -->
+<div id="list_block">
+    <partial name="../Shared/_DetailPartial.cshtml" for="@Model.stock">
 </div>
 <!-- loading gif -->
 <div id="over" class="overLoading"></div>
@@ -731,3 +791,7 @@
 
     </div>
 </div>
+
+
+
+

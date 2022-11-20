@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -15,7 +16,7 @@ namespace WebApplication2.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         GoodStocks GoodStock = new GoodStocks();
-
+        
 
         public HomeController(ILogger<HomeController> logger)
         {
@@ -24,6 +25,7 @@ namespace WebApplication2.Controllers
 
         public IActionResult Index()
         {
+            HttpContext.Response.Cookies.Append("CookieKey", "CookieValue");
             return View();
         }
 
@@ -181,9 +183,9 @@ namespace WebApplication2.Controllers
                                 break;
                             }
                             if (item.TextContent.IndexOf("本期淨利（淨損）") != -1)
-                                queryStock.NetIncome = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
+                                NetIncome = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
                             if (item.TextContent.IndexOf("營業收入合計") != -1)
-                                queryStock.Revenue = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
+                                Revenue = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
                   
                         }
 

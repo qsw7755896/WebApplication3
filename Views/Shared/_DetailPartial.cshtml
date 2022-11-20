@@ -1,14 +1,4 @@
 ﻿@model IEnumerable<WebApplication3.Models.StockData>
-
-@{
-    ViewData["Title"] = "Detail";
-}
-
-<h1>View</h1>
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
 <table class="table">
     <thead>
         <tr>
@@ -46,7 +36,8 @@
         </tr>
     </thead>
     <tbody>
-        @if (Model != null){
+        @if (Model != null)
+        {
             @foreach (var item in Model)
             {
                 <tr>
@@ -83,6 +74,5 @@
                 </tr>
             }
         }
-       
     </tbody>
 </table>
