@@ -1,4 +1,4 @@
-﻿@model WebApplication3.Models.GoodStocks
+﻿@model WebApplication3.Models.StockData
 @{
     ViewData["Title"] = "Yeee先生找股票";
 }
@@ -71,6 +71,9 @@
         }
     }
 
+    .table {
+        color: white;
+    }
 
     .info_box {
         text-align: center;
@@ -212,6 +215,7 @@
                         $("#total_grade").html(roundDecimal(total_grade, 1));
                         stockData.year.reverse();
                         showLoading(false);
+                        setRowInList(data.resultdt);
                     },
                     error: function (thrownError) {
                         console.log(thrownError);
@@ -303,19 +307,10 @@
             }
         })
         // 總分 event
-        //$("div#total_float").on("click",function () {
-        //     $.ajax({
-        //            method: "GET",
-        //            url: "/Home/Detail",
-        //            //data: $("input.keyword").val(),
-        //            //contentType: "",
-
-                    
-        //            error: function (thrownError) {
-        //                console.log(thrownError);
-        //            }
-        //        })           
-        //})
+        $("div#total_float").on("click", function () {
+            $("#grade_block").toggle();
+            $("#list_block").toggle();
+        })
 
         /* define func area*/
         /**
@@ -493,30 +488,30 @@
             var current = Math.round(dt[0].netIncome / dt[0].shareholderEQU * 10000) / 100.00;
             stockData.r_arr.push(current);
 
-            if (current > 15 && current < 30) 
+            if (current > 15 && current < 30)
                 grade++;
             else
                 grade--;
 
             for (var i = 1; i < dt.length; i++) {
-                if (dt[i].shareholderEQU == 0) 
+                if (dt[i].shareholderEQU == 0)
                     ROE = 0;
-                else 
+                else
                     ROE = Math.round(dt[i].netIncome / dt[i].shareholderEQU * 10000) / 100.00;
-                    
+
                 stockData.r_arr.push(ROE);
 
                 // 至少要大於15，但不能超過30
-                if (ROE < 30 && ROE > 15) 
+                if (ROE < 30 && ROE > 15)
                     grade++;
-                else 
+                else
                     grade--;
 
                 if (i == 1)
                     slope += (current - ROE); // 計算斜率
                 else
                     slope += (prev_ROE - ROE); // 計算斜率
-                
+
                 prev_ROE = ROE;
             }
 
@@ -587,6 +582,30 @@
         }
 
         /**
+         * Subject: 列表顯示
+         */
+        var setRowInList = function (dt) {
+            var dom = "";
+
+            for (var i = 0; i < dt.length; i++) {
+                dom =
+                    "<tr>" +
+                    "  <td>" + dt[i].year + "</td>" +
+                    "  <td>" + dt[i].revenue + "</td>" +
+                    "  <td>" + dt[i].netIncome + "</td>" +
+                    "  <td>" + dt[i].eps + "</td>" +
+                    "  <td>" + dt[i].dividend + "</td>" +
+                    "  <td>" + dt[i].netCashFlow + "</td>" +
+                    "  <td>" + dt[i].operatingCF + "</td>" +
+                    "  <td>" + dt[i].investingCF + "</td>" +
+                    "  <td>" + dt[i].financingCF + "</td>" +
+                    "  <td>" + dt[i].inventory + "</td>" +
+                    "</tr>"
+                $("div#list_block tbody").append(dom);
+            }
+        }
+
+        /**
          * Subject: loading圖示顯示
          */
         function showLoading(show) {
@@ -604,6 +623,8 @@
          */
         function init() {
             $("#total_float").hide();
+            $("#grade_block").show();
+            $("#list_block").hide();
         }
 
 
@@ -642,7 +663,6 @@
 </div>
 <br />
 
-@Html.ActionLink("detail1","Detail")
 <!-- 總分顯示 -->
 <div id="total_float">
     <div id="total_grade" data-toggle="modal" data-target="#list_Model"></div>
@@ -767,7 +787,47 @@
 </div>
 <!-- 列表區塊 -->
 <div id="list_block">
-    <partial name="../Shared/_DetailPartial.cshtml" for="@Model.stock">
+    @* <partial name="../Shared/_DetailPartial.cshtml" for="@Model.stock"> *@
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    @Html.DisplayNameFor(model => model.year)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Revenue)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.NetIncome)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.EPS)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Dividend)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.NetCashFlow)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.OperatingCF)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.InvestingCF)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.FinancingCF)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Inventory)
+                </th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
 </div>
 <!-- loading gif -->
 <div id="over" class="overLoading"></div>
@@ -791,7 +851,3 @@
 
     </div>
 </div>
-
-
-
-
