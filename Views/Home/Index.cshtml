@@ -1,441 +1,655 @@
-﻿@model WebApplication3.Models.GoodStocks
+﻿@model WebApplication3.Models.StockData
 @{
     ViewData["Title"] = "Yeee先生找股票";
 }
 
 @section styles{
 
-    <style>
-        .header {
-            font-family: sans-serif;
-            color: white;
-            font-size: 20px;
-            text-align: center;
-        }
+<style>
+    .header {
+        font-family: sans-serif;
+        color: white;
+        font-size: 20px;
+        text-align: center;
+    }
 
-        .box {
-            margin-bottom: 10px;
-        }
+    .box {
+        margin-bottom: 10px;
+    }
 
-        .point {
-            font-size: 4em;
-            color: red;
-        }
+    .point {
+        font-size: 4em;
+        color: red;
+    }
 
-        .keyword {
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            padding: 6px 12px;
-            height: 38px;
-            color: black;
-        }
+    .keyword {
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 6px 12px;
+        height: 38px;
+        color: black;
+    }
 
-        .search {
-            background-color: red;
-            height: 38px;
-            width: 120px;
-            border-radius: 4px;
-            border: 1px solid red;
-            padding: 3px 12px;
-            margin-left: 5px;
-        }
+    .search {
+        background-color: red;
+        height: 38px;
+        width: 120px;
+        border-radius: 4px;
+        border: 1px solid red;
+        padding: 3px 12px;
+        margin-left: 5px;
+    }
 
+    #total_float {
+        position: fixed;
+        top: 80vh;
+        left: 90vw;
+        height: 100px;
+        width: 100px;
+        border-radius: 99%;
+        justify-content: center;
+        align-items: center;
+        z-index: 20;
+        background-color: red
+    }
+
+
+    #total_grade {
+        text-align: center;
+        padding-top: 23px;
+        font-size: 35px;
+        text-decoration: underline;
+    }
+
+    @@media (max-width: 1200px) {
         #total_float {
-            position: fixed;
-            top: 80vh;
-            left: 90vw;
-            height: 100px;
-            width: 100px;
-            border-radius: 99%;
-            justify-content: center;
-            align-items: center;
-            z-index: 20;
-            background-color: red
-        }
-
-
-        #total_grade {
-            text-align: center;
-            padding-top: 23px;
-            font-size: 35px;
-            text-decoration: underline;
-        }
-
-        @@media (max-width: 1200px) {
-            #total_float {
-                left: 70vw;
-            }
-
-            .layoutLoading {
-                left: 70vw;
-            }
-        }
-
-
-        .info_box {
-            text-align: center;
-            font-size: 1em;
-            background-color: #121212;
-            margin-top: 40px;
-            padding: 10px 30px 10px 30px;
-            min-height: 264px;
-        }
-
-            .info_box > .show_edfri {
-                margin-bottom: 10px;
-                border-radius: 8px;
-                background-color: #e9bcbc;
-                font-size: 5.5em;
-                text-shadow: 6px 6px 0px rgba(0, 0, 0, 0.2);
-            }
-
-            .info_box > p.title {
-                font-weight: bold;
-            }
-
-            .info_box > p.describe {
-                color: #9e9e9e;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-            }
-
-        .info_detail {
-            font-size: 1em;
-            background-color: #121212;
-            margin-top: 40px;
-            padding: 10px 30px 10px 30px;
-            min-height: 264px;
-            display: flex;
-            align-items: center;
-        }
-
-            .info_detail > .grade {
-                font-size: 5.5em;
-                text-align: center;
-                color: #e9bcbc;
-            }
-
-            .info_detail > .rule {
-                color: #9e9e9e;
-                text-align: left;
-            }
-
-                .info_detail > .rule > ul {
-                    list-style-type: decimal;
-                }
-
-        a.detail {
-            color: red;
-            text-decoration: underline;
-        }
-
-        .overLoading {
-            display: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #f5f5f5;
-            opacity: 0.5;
-            z-index: 1000;
+            left: 70vw;
         }
 
         .layoutLoading {
-            display: none;
-            position: absolute;
-            top: 30vh;
-            left: 40vw;
-            width: 20vw;
-            height: 20vh;
-            z-index: 1001;
-            text-align: center;
+            left: 70vw;
         }
-    </style>
+    }
+
+    .table {
+        color: white;
+    }
+
+    .info_box {
+        text-align: center;
+        font-size: 1em;
+        background-color: #121212;
+        margin-top: 40px;
+        padding: 10px 30px 10px 30px;
+        min-height: 264px;
+    }
+
+    .info_box>.show_edfri {
+        margin-bottom: 10px;
+        border-radius: 8px;
+        background-color: #e9bcbc;
+        font-size: 5.5em;
+        text-shadow: 6px 6px 0px rgba(0, 0, 0, 0.2);
+    }
+
+    .info_box>p.title {
+        font-weight: bold;
+    }
+
+    .info_box>p.describe {
+        color: #9e9e9e;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .info_detail {
+        font-size: 1em;
+        background-color: #121212;
+        margin-top: 40px;
+        padding: 10px 30px 10px 30px;
+        min-height: 264px;
+        display: flex;
+        align-items: center;
+    }
+
+    .info_detail>.grade {
+        font-size: 5.5em;
+        text-align: center;
+        color: #e9bcbc;
+    }
+
+    .info_detail>.rule {
+        color: #9e9e9e;
+        text-align: left;
+    }
+
+    .info_detail>.rule>ul {
+        list-style-type: decimal;
+    }
+
+    a.detail {
+        color: red;
+        text-decoration: underline;
+    }
+
+    .overLoading {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #f5f5f5;
+        opacity: 0.5;
+        z-index: 1000;
+    }
+
+    .layoutLoading {
+        display: none;
+        position: absolute;
+        top: 30vh;
+        left: 40vw;
+        width: 20vw;
+        height: 20vh;
+        z-index: 1001;
+        text-align: center;
+    }
+</style>
 }
 @section scripts{
-    <script>
-        $(function () {
-            /* declare variable area*/
-            var base = 0;
-            // 顯示圖表用
-            var stockData = {
-                year: [],
-                e_arr: [],
-                d_arr: [],
-                f_arr: [],
-                r_arr: [],
-                i_arr: []
-            };
-            var myChart;
+<script>
+    $(function () {
+        /* declare variable area*/
+        var base = 0; // 統計有多少年度有資料
+        // 顯示圖表用
+        var stockData = {
+            year: [],
+            e_arr: [],
+            d_arr: [],
+            f_arr: [],
+            cfr_arr: [],
+            cpx_rate_arr: [],
+            r_arr: [],
+            i_arr: []
+        };
+        var myChart;
+        var Weight = [0.3, 0.2, 0.2]; // 計算權重比率
 
-            /* register event area*/
-            // 搜尋 event
-            $("input#search").on("click", function () {
-                var keyword = $("input.keyword").val();
-                if (keyword == "") {
-                    alert("請輸入欲查詢代號!!");
-                    $("input.keyword").focus()
-                } else {
-                    stockData = {
-                        year: [],
-                        e_arr: [],
-                        d_arr: [],
-                        f_arr: [],
-                        r_arr: [],
-                        i_arr: []
-                    };
-                    showLoading(true);
-                    console.log('click search:', new Date())
-                    $.ajax({
-                        method: "GET",
-                        url: "/Home/queryStock/" + $("input.keyword").val(),
-                        //data: $("input.keyword").val(),
-                        //contentType: "",
+        /* register event area*/
+        // 搜尋 event
+        $("input#search").on("click", function () {
+            var keyword = $("input.keyword").val();
+            if (keyword == "") {
+                alert("請輸入欲查詢代號!!");
+                $("input.keyword").focus()
+            } else {
+                stockData = {
+                    year: [],
+                    e_arr: [],
+                    d_arr: [],
+                    f_arr: [],
+                    cfr_arr: [],
+                    cpx_rate_arr: [],
+                    r_arr: [],
+                    i_arr: []
+                };
+                showLoading(true);
+                console.log('click search:', new Date())
+                $.ajax({
+                    method: "GET",
+                    url: "/Home/queryStock/" + $("input.keyword").val(),
+                    //data: $("input.keyword").val(),
+                    //contentType: "",
 
-                        success: function (data) {
-                            console.log('result back:', new Date())
-                            console.log(data);
-                            var total_grade = 0;
-                            total_grade += E_chk(data.resultdt);
-                            total_grade += D_chk(data.resultdt);
-                            total_grade += F_chk(data.resultdt);
-                            total_grade += R_chk(data.resultdt);
-                            total_grade += I_chk(data.resultdt);
-                            $("#total_float").show();
-                            $("#total_grade").html(roundDecimal(total_grade, 1));
-                            stockData.year.reverse();
-                            showLoading(false);
-                        },
-                        error: function (thrownError) {
-                            console.log(thrownError);
-                        }
-                    })
-                }
-            })
-            // 圖表 event
-            $("a.detail").on("click", function () {
-                var keyword = $("input.keyword").val();
-                if (keyword == "") {
-                    alert("請先輸入欲查詢代號!!");
-                    $("input.keyword").focus();
-                } else {
-                    myChart.data.labels = stockData.year;
-                    myChart.data.datasets[0].label = $(this).parent().siblings()[1].innerHTML;
-                    myChart.data.datasets[0].data = (function (target) {
-                        console.log(stockData);
-                        switch (target) {
-                            case 'E':
-                                return stockData.e_arr;
-                                break;
-                            case 'D':
-                                return stockData.d_arr;
-                                break;
-                            case 'F':
-                                return stockData.f_arr;
-                                break;
-                            case 'R':
-                                return stockData.r_arr;
-                                break;
-                            case 'I':
-                                return stockData.i_arr;
-                                break;
-                            default:
-                                return null;
-                        }
-                    })($(this).parent().siblings()[0].innerHTML);
-                    myChart.update();
-                }
-            })
-
-            /* define func area*/
-            /**
-             * Subject: EPS calculate
-             * Description: 迴圈計算陣列，當前的數值大於後一個就給1分，再除以總數(有幾筆)
-             */
-            var E_chk = function (dt) {
-                var count = 0;
-                var basecnt = 0
-                for (var i = 0; i < dt.length - 1; i++) {
-                    stockData.e_arr.push(dt[i].eps);
-                    if (dt[i].exist) {
-                        basecnt++;
-                        if (dt[i].eps > dt[i + 1].eps)
-                            count++;
+                    success: function (data) {
+                        console.log('result back:', new Date())
+                        console.log(data);
+                        var total_grade = 0;
+                        total_grade += E_chk(data.resultdt);
+                        total_grade += D_chk(data.resultdt);
+                        total_grade += F_chk(data.resultdt);
+                        total_grade += R_chk(data.resultdt);
+                        total_grade += I_chk(data.resultdt);
+                        $("#total_float").show();
+                        $("#total_grade").html(roundDecimal(total_grade, 1));
+                        stockData.year.reverse();
+                        showLoading(false);
+                        setRowInList(data.resultdt);
+                    },
+                    error: function (thrownError) {
+                        console.log(thrownError);
                     }
-                }
-                stockData.e_arr.push(dt[dt.length - 1].eps);
-                if (dt[dt.length - 1].exist) basecnt++;
-                base = basecnt;
-                $("div#E_row div.grade").html("+" + roundDecimal(count / basecnt, 2));
-                stockData.e_arr.reverse();
-                return roundDecimal(count / basecnt, 2);
+                })
             }
-
-            /**
-             * Subject: Diviend calculate
-             * Description: 迴圈計算陣列，當前的數值大於後一個就給1分，再除以總數(有幾筆)
-             */
-            var D_chk = function (dt) {
-                var count = 0;
-                var basecnt = 0
-                var dividend_now = 0;
-                var dividend_last = 0
-                for (var i = 0; i < dt.length - 1; i++) {
-                    dividend_now = 0;
-                    dividend_last = 0
-                    if (dt[i].exist) {
-                        basecnt++;
-                        if (dt[i].eps != 0)
-                            dividend_now = Math.round(dt[i].dividend / dt[i].eps * 10000) / 100.00;
-                        if (dt[i + 1].eps != 0)
-                            dividend_last = Math.round(dt[i + 1].dividend / dt[i + 1].eps * 10000) / 100.00;
-                        if (dividend_now > dividend_last && dividend_now < 100)
-                            count++;
-                    }
-                    stockData.d_arr.push(dividend_now);
-                }
-                if (dt[dt.length - 1].eps != 0)
-                    stockData.d_arr.push(Math.round(dt[dt.length - 1].dividend / dt[dt.length - 1].eps * 10000) / 100.00);
-                if (dt[dt.length - 1].exist) basecnt++;
-                $("div#D_row div.grade").html("+" + roundDecimal(count / basecnt, 2));
-                stockData.d_arr.reverse();
-                return roundDecimal(count / basecnt, 2);
-            }
-
-            /**
-             * Subject: FreeCachFlow calculate
-             * Description: 迴圈計算陣列，當前的數值大於後一個就給1分，再除以總數(有幾筆)
-             */
-            var F_chk = function (dt) {
-                var count = 0;
-                var basecnt = 0
-                for (var i = 0; i < dt.length; i++) {
-                    stockData.f_arr.push(dt[i].netCashFlow);
-                    if (dt[i].exist) {
-                        basecnt++;
-                        if (dt[i].netCashFlow > 0)
-                            count++;
-                    }
-                }
-                $("div#F_row div.grade").html("+" + roundDecimal(count / basecnt, 2));
-                stockData.f_arr.reverse();
-                return roundDecimal(count / basecnt, 2);
-            }
-
-            /**
-             * Subject: ROE calculate
-             * Description: 迴圈計算陣列，當前的數值大於後一個就給1分，再除以總數(有幾筆)
-             */
-            var R_chk = function (dt) {
-                var count = 0;
-                var ROE = 0;
-                var basecnt = 0
-                for (var i = 0; i < dt.length; i++) {
-                    ROE = 0;
-                    if (dt[i].shareholderEQU != 0)
-                        ROE = Math.round(dt[i].netIncome / dt[i].shareholderEQU * 10000) / 100.00;
-                    stockData.r_arr.push(ROE);
-                    stockData.year.push(dt[i].year);
-                    if (dt[i].exist) {
-                        basecnt++;
-                        if (ROE > 15 && ROE < 30)
-                            count++;
-                    }
-                }
-                $("div#R_row div.grade").html("+" + roundDecimal(count / basecnt, 2));
-                stockData.r_arr.reverse();
-                return roundDecimal(count / basecnt, 2);
-            }
-
-            /**
-             * Subject: Interest calculate
-             * Description: 淨收入/利息，再除以總數(有幾筆)
-             */
-            var I_chk = function (dt) {
-                var count = 0;
-                var IC = 0;
-                IC = dt[0].netIncome / dt[0].interest;
-                switch (true) {
-                    case IC > 4:
-                        count = 1;
+        })
+        // 圖表 event
+        $("a.detail").on("click", function () {
+            var keyword = $("input.keyword").val();
+            if (keyword == "") {
+                alert("請先輸入欲查詢代號!!");
+                $("input.keyword").focus();
+            } else {
+                myChart.data.datasets = [];
+                console.log(stockData);
+                myChart.data.labels = stockData.year;
+                switch ($(this).parent().siblings()[0].innerHTML) {
+                    case 'E':
+                        var ds = {
+                            label: 'EPS',
+                            data: stockData.e_arr,
+                            fill: false,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1
+                        };
+                        myChart.data.datasets.push(ds);
                         break;
-                    case IC > 10:
-                        count = 0.5;
+                    case 'D':
+                        var ds = {
+                            label: '股息發放率',
+                            data: stockData.d_arr,
+                            fill: false,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1
+                        };
+                        myChart.data.datasets.push(ds);
+                        break;
+                    case 'F':
+                        var ds = {
+                            label: '現金流量比(%)',
+                            data: stockData.cfr_arr,
+                            fill: false,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1
+                        };
+                        myChart.data.datasets.push(ds);
+                        ds = {
+                            label: '資本支出率(%)',
+                            data: stockData.cpx_rate_arr,
+                            fill: false,
+                            borderColor: 'rgb(255, 132, 155)',
+                            tension: 0.1
+                        };
+                        myChart.data.datasets.push(ds);
+                        break;
+                    case 'R':
+                        var ds = {
+                            label: '股東權益報酬率',
+                            data: stockData.r_arr,
+                            fill: false,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1
+                        };
+                        myChart.data.datasets.push(ds);
+                        ds = {
+                            label: 'EPS',
+                            data: stockData.e_arr,
+                            fill: false,
+                            borderColor: 'rgb(255, 132, 155)',
+                            tension: 0.1
+                        };
+                        myChart.data.datasets.push(ds);
+                        break;
+                    case 'I':
+                        var ds = {
+                            label: '利息保障倍數',
+                            data: stockData.i_arr,
+                            fill: false,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1
+                        };
+                        myChart.data.datasets.push(ds);
                         break;
                     default:
-                        count = 0;
+                        return null;
                 }
-                // 另外將歷年的還債能力寫入圖表
-                for (var i = 0; i < dt.length; i++) {
-                    IC = 0;
-                    if (dt[i].interest != 0)
-                        IC = dt[i].netIncome / dt[i].interest;
-                    stockData.i_arr.push(IC);
-                }
-                console.log('I:', count);
-                $("div#I_row div.grade").html("+" + roundDecimal(count / base, 2));
-                stockData.i_arr.reverse();
-                return roundDecimal(count / base, 2);
+                myChart.update();
             }
+        })
+        // 總分 event
+        $("div#total_float").on("click", function () {
+            $("#grade_block").toggle();
+            $("#list_block").toggle();
+        })
 
-            /**
-             * Subject: 處理js除法錯誤問題
-             */
-            var roundDecimal = function (val, precision) {
-                return Math.round(Math.round(val * Math.pow(10, (precision || 0) + 1)) / 10) / Math.pow(10, (precision || 0));
+        /* define func area*/
+        /**
+         * Subject: EPS calculate
+         * Method: 稅後淨利 / 在外流通股票 - eps 資料分析
+         * Description: 
+         *   以最近一年度為基準，計算與各年度之斜率，再配合權重計算
+         *   [ 0.3, 0.2, 0.1 ]三年為一區間，以110為最後一年度舉例
+         *   110-108 -> 0.3權重 | 107-105 -> 0.2權重 | 104-102 -> 0.1權重
+         *   所以注重的是成長幅度
+         */
+        var E_chk = function (dt) {
+            var slope = 0;
+            stockData.e_arr.push(dt[0].eps);
+            stockData.year.push(dt[0].year);
+            for (var i = 1; i < dt.length; i++) {
+                if (dt[i].exist)
+                    base++;
+                stockData.year.push(dt[i].year);
+                stockData.e_arr.push(dt[i].eps);
+                slope += ((dt[0].eps - dt[i].eps) / (dt[0].year - dt[i].year)) * Weight[parseInt(i / 4)]; // 計算斜率與權重
             }
+            if (slope >= 0)
+                $("div#E_row div.grade").html("+" + roundDecimal(slope, 2));
+            else
+                $("div#E_row div.grade").html(roundDecimal(slope, 2));
+            stockData.e_arr.reverse();
+            return roundDecimal(slope, 2);
+        }
 
-            /**
-             * Subject: loading圖示顯示
-             */
-            function showLoading(show) {
-                if (show) {
-                    document.getElementById("over").style.display = "block";
-                    document.getElementById("layout").style.display = "block";
+        /**
+         * Subject: Diviend calculate
+         * Method: 股息(利) / eps - 證明公司有給錢，公司賺多少然後發多少給股東
+         * Description: 
+         *      注重於是否有平穩，以這基準下去判斷此指標，避免不同公司有所落差
+         *      1. 基本上每年0 < val < 100(沒賺那麼多，卻發那麼多股利)，就先給1分基本分(10分)，
+         *      2. 若有一年幅度超過 +30%則減 1分、 +50%則減 2分，突然發那麼多錢卻沒賺那麼多怪怪的
+         *      3. 計算最高以及最低峰值差距， 20加 3分、 30加 2分、 50分加 1分
+         */
+        var D_chk = function (dt) {
+            var dividend = 0;
+            var next_dividend = 0;
+            var grade = 0;
+            var maxPeak = 999;
+            var minPeak = 999;
+
+            for (var i = dt.length - 1; i >= 0; i--) {
+                if (dt[i].eps == 0)
+                    dividend = 0;
+                else
+                    dividend = Math.round(dt[i].dividend / dt[i].eps * 10000) / 100.00;
+
+                // 找出峰值
+                if (maxPeak == 999 || minPeak == 999) {
+                    maxPeak = dividend;
+                    minPeak = dividend;
                 } else {
-                    document.getElementById("over").style.display = "none";
-                    document.getElementById("layout").style.display = "none";
+                    if (dividend > maxPeak) maxPeak = dividend;
+                    if (dividend < minPeak) minPeak = dividend;
                 }
+
+                // 介於0~100就給基本分
+                if (dividend > 0 && dividend < 100) grade++;
+
+                if (i != 0) {
+                    next_dividend = Math.round(dt[i - 1].dividend / dt[i - 1].eps * 10000) / 100.00;
+                    if ((next_dividend - dividend) >= 50)  // 大於50%
+                        grade = grade - 2
+                    else if ((next_dividend - dividend) >= 30 && (next_dividend - dividend) < 50)  // 大於30% 小於50%
+                        grade = grade - 1;
+                }
+                stockData.d_arr.push(dividend);
             }
 
-            /**
-             * Subject: 初始化
-             */
-            function init() {
-                $("#total_float").hide();
+            // 峰值差距
+            if ((maxPeak - minPeak) <= 20)
+                grade = grade + 3;
+            else if ((maxPeak - minPeak) <= 30 && (maxPeak - minPeak) > 20)
+                grade = grade + 2;
+            else if ((maxPeak - minPeak) <= 50 && (maxPeak - minPeak) > 30)
+                grade = grade + 1;
+
+            if (grade >= 0)
+                $("div#D_row div.grade").html("+" + roundDecimal(grade, 2));
+            else
+                $("div#D_row div.grade").html(roundDecimal(grade, 2));
+            return roundDecimal(grade, 2);
+        }
+
+        /**
+         * Subject: FreeCachFlow calculate
+         * Method: 穩定淨現金流向上 - 現金流量比、資本支出率
+         * Description: 
+         *      注重現金流是否為正數，並利用現金流量比以及資本支出率評斷
+         *      淨現金流應 > 0 ，則加1，則另兩種比率應都大於100%
+         */
+        var F_chk = function (dt) {
+            var grade = 0;
+            var cf_rate = 0; // 現金流量比率
+            var cf_rate_cur = 0;
+            var cpx_rate = 0; // 資本支出率
+            var cpx_rate_cur = 0;
+
+            // 淨現金流
+            stockData.f_arr.push(dt[0].netCashFlow);
+            // 現金流量比率 = 營業活動現金流 / 流動負債
+            cf_rate_cur = Math.round(dt[0].operatingCF / dt[0].liabilities * 10000) / 100.00;
+            stockData.cfr_arr.push(cf_rate_cur);
+            // 資本支出率 = 營業活動現金流 / 資本支出
+            cpx_rate_cur = Math.round(dt[0].operatingCF / Math.abs(dt[0].capex) * 10000) / 100.00;
+            stockData.cpx_rate_arr.push(cpx_rate_cur);
+
+            // 淨現金流為正數 +1
+            if (dt[0].netCashFlow > 0)
+                grade++;
+            else
+                grade--;
+            // 現金流量比率>100% +1
+            if (cf_rate_cur > 100)
+                grade++;
+            else
+                grade--;
+            // 資本支出率>100% +1
+            if (cpx_rate_cur > 100)
+                grade++;
+            else
+                grade--;
+
+            for (var i = 1; i < dt.length; i++) {
+                stockData.f_arr.push(dt[i].netCashFlow);
+                cf_rate = Math.round(dt[i].operatingCF / dt[i].liabilities * 10000) / 100.00;
+                stockData.cfr_arr.push(cf_rate);
+                cpx_rate = Math.round(dt[i].operatingCF / Math.abs(dt[i].capex) * 10000) / 100.00;
+                stockData.cpx_rate_arr.push(cpx_rate);
+
+                // 淨現金流為正數 +0.2
+                if (dt[i].netCashFlow > 0)
+                    grade++;
+                else
+                    grade--;
+                // 現金流量比率>100% +0.2
+                if (cf_rate > 100)
+                    grade++;
+                else
+                    grade--;
+                // 資本支出率>100% +0.2
+                if (cpx_rate > 100)
+                    grade++;
+                else
+                    grade--;
             }
 
+            if (grade >= 0)
+                $("div#F_row div.grade").html("+" + roundDecimal(grade, 2));
+            else
+                $("div#F_row div.grade").html(roundDecimal(grade, 2));
+            stockData.f_arr.reverse();
+            stockData.cfr_arr.reverse();
+            stockData.cpx_rate_arr.reverse();
+            return roundDecimal(grade, 2);
+        }
 
-            /* main program start here */
-            init();
-            // 預先建立圖表
-            myChart = new Chart($("#stockDataChart"), {
-                type: 'line',
-                data: {
-                    labels: '',
-                    datasets: [{
-                        label: '',
-                        data: [],
-                        fill: false,
-                        borderColor: 'rgb(75, 192, 192)',
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
+        /**
+         * Subject: ROE calculate
+         * Method: 淨收入 / 股東權益 - ROE資料分析
+         * Description: 
+         *      ROE賺錢效率必須處於15~30之間，以這為基準判斷每年的ROE是否在此範圍
+         *      在計算ROE是否有穩定成長，以相鄰兩年計算斜率，並加總計算10年的成長率。
+         */
+        var R_chk = function (dt) {
+            var ROE = 0;
+            var prev_ROE = 0;
+            var slope = 0;
+            var grade = 0;
+            var current = Math.round(dt[0].netIncome / dt[0].shareholderEQU * 10000) / 100.00;
+            stockData.r_arr.push(current);
+
+            if (current > 15 && current < 30)
+                grade++;
+            else
+                grade--;
+
+            for (var i = 1; i < dt.length; i++) {
+                if (dt[i].shareholderEQU == 0)
+                    ROE = 0;
+                else
+                    ROE = Math.round(dt[i].netIncome / dt[i].shareholderEQU * 10000) / 100.00;
+
+                stockData.r_arr.push(ROE);
+
+                // 至少要大於15，但不能超過30
+                if (ROE < 30 && ROE > 15)
+                    grade++;
+                else
+                    grade--;
+
+                if (i == 1)
+                    slope += (current - ROE); // 計算斜率
+                else
+                    slope += (prev_ROE - ROE); // 計算斜率
+
+                prev_ROE = ROE;
+            }
+
+            if (slope > 0) grade++;
+
+            if (grade >= 0)
+                $("div#R_row div.grade").html("+" + grade);
+            else
+                $("div#R_row div.grade").html(grade);
+            stockData.r_arr.reverse();
+            return roundDecimal(grade, 2);
+        }
+
+        /**
+         * Subject: Interest calculate
+         * Method: 淨收入/利息，計算利息保障倍數
+         * Description: 
+         *      只計算最近這一年的利息保障倍數，然後確認是否有往下趨勢
+         *      使用最近這一年下去比對前幾年的數值，小於0則減1。
+         */
+        var I_chk = function (dt) {
+            var grade = 0;
+            var IC = 0;
+            var IC_curr = 0;
+            var slope = 0;
+            // 只計算當年度的
+            IC = dt[0].netIncome / dt[0].interest;
+            switch (true) {
+                case IC > 10:
+                    grade = 1;
+                    break;
+                case IC > 4:
+                    grade = 0.5;
+                    break;
+                case IC < 0:
+                    grade = -1;
+                default:
+                    grade = 0;
+            }
+            IC_curr = IC;
+            stockData.i_arr.push(IC_curr);
+
+            // 另外將歷年的還債能力寫入圖表
+            for (var i = 1; i < dt.length; i++) {
+                IC = 0;
+                if (dt[i].interest != 0)
+                    IC = dt[i].netIncome / dt[i].interest;
+                stockData.i_arr.push(IC);
+                // 計算斜率
+                slope += ((IC_curr - IC) / (dt[0].year - dt[i].year)) * Weight[parseInt(i / 4)]; // 計算斜率與權重
+            }
+
+            if (slope < 0) grade--;
+
+            if (grade >= 0)
+                $("div#I_row div.grade").html("+" + roundDecimal(grade, 2));
+            else
+                $("div#I_row div.grade").html(roundDecimal(grade, 2));
+            stockData.i_arr.reverse();
+            return roundDecimal(grade, 2);
+        }
+
+        /**
+         * Subject: 處理js除法錯誤問題
+         */
+        var roundDecimal = function (val, precision) {
+            return Math.round(Math.round(val * Math.pow(10, (precision || 0) + 1)) / 10) / Math.pow(10, (precision || 0));
+        }
+
+        /**
+         * Subject: 列表顯示
+         */
+        var setRowInList = function (dt) {
+            var dom = "";
+
+            for (var i = 0; i < dt.length; i++) {
+                dom =
+                    "<tr>" +
+                    "  <td>" + dt[i].year + "</td>" +
+                    "  <td>" + dt[i].revenue + "</td>" +
+                    "  <td>" + dt[i].netIncome + "</td>" +
+                    "  <td>" + dt[i].eps + "</td>" +
+                    "  <td>" + dt[i].dividend + "</td>" +
+                    "  <td>" + dt[i].netCashFlow + "</td>" +
+                    "  <td>" + dt[i].operatingCF + "</td>" +
+                    "  <td>" + dt[i].investingCF + "</td>" +
+                    "  <td>" + dt[i].financingCF + "</td>" +
+                    "  <td>" + dt[i].inventory + "</td>" +
+                    "</tr>"
+                $("div#list_block tbody").append(dom);
+            }
+        }
+
+        /**
+         * Subject: loading圖示顯示
+         */
+        function showLoading(show) {
+            if (show) {
+                document.getElementById("over").style.display = "block";
+                document.getElementById("layout").style.display = "block";
+            } else {
+                document.getElementById("over").style.display = "none";
+                document.getElementById("layout").style.display = "none";
+            }
+        }
+
+        /**
+         * Subject: 初始化
+         */
+        function init() {
+            $("#total_float").hide();
+            $("#grade_block").show();
+            $("#list_block").hide();
+        }
+
+
+        /* main program start here */
+        init();
+        // 預先建立圖表
+        myChart = new Chart($("#stockDataChart"), {
+            type: 'line',
+            data: {
+                labels: '',
+                datasets: []
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
                     }
                 }
+            }
 
-            });
         });
+    });
 
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.0/Chart.min.js"></script>
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.0/Chart.min.js"></script>
 }
 <!-- 搜尋區塊 -->
 <div class="header">
@@ -448,125 +662,172 @@
 
 </div>
 <br />
+
 <!-- 總分顯示 -->
 <div id="total_float">
-    <div id="total_grade"></div>
+    <div id="total_grade" data-toggle="modal" data-target="#list_Model"></div>
 </div>
 <!-- 分數區塊 -->
-<div id="E_row" class="row">
-    <div class="col-md-4 col-xs-6">
-        <div class="info_box">
-            <div class="show_edfri">E</div>
-            <p class="title">- EPS -</p>
-            <p class="describe">EPS每一股淨賺多少錢</p>
-            <div class="detail">
-                <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">View</a>
+<div id="grade_block">
+    <div id="E_row" class="row">
+        <div class="col-md-4 col-xs-6">
+            <div class="info_box">
+                <div class="show_edfri">E</div>
+                <p class="title">- EPS -</p>
+                <p class="describe">EPS每一股淨賺多少錢</p>
+                <div class="detail">
+                    <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">圖表</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8 col-xs-6">
+            <div class="info_detail row">
+                <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
+                <div class="rule col-md-6 hidden-sm hidden-xs">
+                    <ul>
+                        <li>能否穩定增加EPS</li>
+                        <li>以近年增長幅度為主</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-8 col-xs-6">
-        <div class="info_detail row">
-            <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
-            <div class="rule col-md-6 hidden-sm hidden-xs">
-                <ul>
-                    <li>10年穩定增加EPS</li>
-                    <li>當年度增加就加1</li>
-                </ul>
+    <div id="D_row" class="row">
+        <div class="col-md-4 col-xs-6">
+            <div class="info_box">
+                <div class="show_edfri">D</div>
+                <p class="title">- DIVIDEND -</p>
+                <p class="describe">證明公司已經有錢給你</p>
+                <div class="detail">
+                    <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">圖表</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8 col-xs-6">
+            <div class="info_detail row">
+                <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
+                <div class="rule col-md-6 hidden-sm hidden-xs">
+                    <ul>
+                        <li>股息/EPS 能否穩定發放股息</li>
+                        <li>應避免快速成長及減緩</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="F_row" class="row">
+        <div class="col-md-4 col-xs-6">
+            <div class="info_box">
+                <div class="show_edfri">F</div>
+                <p class="title">- Free Cash Flow -</p>
+                <p class="describe">穩定現金流</p>
+                <div class="detail">
+                    <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">圖表</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8 col-xs-6">
+            <div class="info_detail row">
+                <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
+                <div class="rule col-md-6 hidden-sm hidden-xs">
+                    <ul>
+                        <li>自由現金流持續能否為正數</li>
+                        <li>營業用現金能否負擔支出</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="R_row" class="row">
+        <div class="col-md-4 col-xs-6">
+            <div class="info_box">
+                <div class="show_edfri">R</div>
+                <p class="title">- ROE -</p>
+                <p class="describe">賺錢的效率</p>
+                <div class="detail">
+                    <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">圖表</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8 col-xs-6">
+            <div class="info_detail row">
+                <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
+                <div class="rule col-md-6 hidden-sm hidden-xs">
+                    <ul>
+                        <li>ROE應介於15% ~ 30%</li>
+                        <li>能否穩定成長</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="I_row" class="row">
+        <div class="col-md-4 col-xs-6">
+            <div class="info_box">
+                <div class="show_edfri">I</div>
+                <p class="title">- Interest Coverage -</p>
+                <p class="describe">還債能力</p>
+                <div class="detail">
+                    <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">圖表</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8 col-xs-6">
+            <div class="info_detail row">
+                <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
+                <div class="rule col-md-6 hidden-sm hidden-xs">
+                    <ul>
+                        <li>淨收入/利息，利息保障倍數採納最近一年計算</li>
+                        <li>呈現下降則該注意!</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
 </div>
-<div id="D_row" class="row">
-    <div class="col-md-4 col-xs-6">
-        <div class="info_box">
-            <div class="show_edfri">D</div>
-            <p class="title">- DIVIDEND -</p>
-            <p class="describe">證明公司已經有錢給你</p>
-            <div class="detail">
-                <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">View</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-8 col-xs-6">
-        <div class="info_detail row">
-            <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
-            <div class="rule col-md-6 hidden-sm hidden-xs">
-                <ul>
-                    <li>股息/EPS，每年穩定發放股息</li>
-                    <li>當年度增加就加1</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
-<div id="F_row" class="row">
-    <div class="col-md-4 col-xs-6">
-        <div class="info_box">
-            <div class="show_edfri">F</div>
-            <p class="title">- Free Cash Flow -</p>
-            <p class="describe">穩定現金流</p>
-            <div class="detail">
-                <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">View</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-8 col-xs-6">
-        <div class="info_detail row">
-            <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
-            <div class="rule col-md-6 hidden-sm hidden-xs">
-                <ul>
-                    <li>10年自由現金流持續為正數</li>
-                    <li>當年度增加就加1</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
-<div id="R_row" class="row">
-    <div class="col-md-4 col-xs-6">
-        <div class="info_box">
-            <div class="show_edfri">R</div>
-            <p class="title">- ROE -</p>
-            <p class="describe">賺錢的效率</p>
-            <div class="detail">
-                <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">View</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-8 col-xs-6">
-        <div class="info_detail row">
-            <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
-            <div class="rule col-md-6 hidden-sm hidden-xs">
-                <ul>
-                    <li>10年ROE股東權益報酬率 > 15%</li>
-                    <li>當年度增加就加1</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
-<div id="I_row" class="row">
-    <div class="col-md-4 col-xs-6">
-        <div class="info_box">
-            <div class="show_edfri">I</div>
-            <p class="title">- Interest Coverage -</p>
-            <p class="describe">還債能力</p>
-            <div class="detail">
-                <a href="#" class="detail" data-toggle="modal" data-target="#detail_Model">View</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-8 col-xs-6">
-        <div class="info_detail row">
-            <div class="grade col-md-6 col-sm-12 col-xs-12">0</div>
-            <div class="rule col-md-6 hidden-sm hidden-xs">
-                <ul>
-                    <li>淨收入/利息，採取最新一年資料</li>
-                    <li>> 10得10分；> 4得5分</li>
-                </ul>
-            </div>
-        </div>
-    </div>
+<!-- 列表區塊 -->
+<div id="list_block">
+    @* <partial name="../Shared/_DetailPartial.cshtml" for="@Model.stock"> *@
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    @Html.DisplayNameFor(model => model.year)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Revenue)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.NetIncome)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.EPS)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Dividend)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.NetCashFlow)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.OperatingCF)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.InvestingCF)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.FinancingCF)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Inventory)
+                </th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
 </div>
 <!-- loading gif -->
 <div id="over" class="overLoading"></div>
@@ -581,7 +842,7 @@
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
-                <canvas id="stockDataChart" width="400" height="400"></canvas>
+                <canvas id="stockDataChart" width="600px" height="400"></canvas>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>

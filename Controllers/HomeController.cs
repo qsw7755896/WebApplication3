@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -15,7 +16,7 @@ namespace WebApplication2.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         GoodStocks GoodStock = new GoodStocks();
-
+        
 
         public HomeController(ILogger<HomeController> logger)
         {
@@ -24,6 +25,7 @@ namespace WebApplication2.Controllers
 
         public IActionResult Index()
         {
+            HttpContext.Response.Cookies.Append("CookieKey", "CookieValue");
             return View();
         }
 
@@ -168,21 +170,23 @@ namespace WebApplication2.Controllers
                 switch (dataFlag)
                 {
                     case "1":
-                        var list = document.QuerySelectorAll(".hasBorder tr").Skip(10 - 1);
+                        var NetIncome = "";
+                        var Revenue = "";
+                        var list = document.QuerySelectorAll(".hasBorder tr").Skip(1 - 1);
                         if (list.Count() == 0)
                             queryStock.exist = false;
                         foreach (var item in list)
-                        {
-                            if (item.TextContent.IndexOf("本期淨利（淨損）") == -1)
-                            {
-                                continue;
-                            }
-                            else
-                            {
-                                result = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
-                                queryStock.NetIncome = Convert.ToDouble(result);
+                        {   
+                            if (Revenue != "" && NetIncome != ""){
+                                queryStock.NetIncome = Convert.ToDouble(NetIncome);
+                                queryStock.Revenue = Convert.ToDouble(Revenue);
                                 break;
                             }
+                            if (item.TextContent.IndexOf("本期淨利（淨損）") != -1)
+                                NetIncome = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
+                            if (item.TextContent.IndexOf("營業收入合計") != -1)
+                                Revenue = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
+                  
                         }
 
                         list = document.QuerySelectorAll(".hasBorder tr").Skip(40 - 1);
@@ -203,34 +207,40 @@ namespace WebApplication2.Controllers
                         break;
 
                     case "2":
-                        list = document.QuerySelectorAll(".hasBorder tr").Skip(64 - 1);
+                        var liab = "";
+                        var share = "";
+                        list = document.QuerySelectorAll(".hasBorder tr").Skip(20 - 1);
                         if (list.Count() == 0)
                             queryStock.exist = false;
                         foreach (var item in list)
                         {
-                            if (item.TextContent.IndexOf("歸屬於母公司業主之權益合計") == -1)
-                            {
-                                continue;
-                            }
-                            else
-                            {
-                                result = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
-                                queryStock.ShareholderEQU = Convert.ToDouble(result);
+                            if (liab != "" && share != ""){
+                                queryStock.Liabilities = Convert.ToDouble(liab);
+                                queryStock.ShareholderEQU = Convert.ToDouble(share);
                                 break;
                             }
+                            if (item.TextContent.IndexOf("　　流動負債合計") != -1)
+                                liab = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
+                            if (item.TextContent.IndexOf("歸屬於母公司業主之權益合計") != -1)
+                                share = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
                         }
                         break;
 
                     case "3":
-                        string num1 = "", num2 = "", num3 = "", num_Interest = "";
+                        string num1 = "", num2 = "", num3 = "", num4 = "", num5 = "", num_Interest = "";
                         list = document.QuerySelectorAll(".hasBorder tr").Skip(10 - 1);
                         if (list.Count() == 0)
                             queryStock.exist = false;
                         foreach (var item in list)
                         {
-                            if (num1 != "" && num2 != "" && num3 != "" && num_Interest != "")
+                            if (num1 != "" && num2 != "" && num3 != "" && num4 != "" && num5 != "" && num_Interest != "")
                             {
                                 queryStock.NetCashFlow = Convert.ToDouble(num1) + Convert.ToDouble(num2) + Convert.ToDouble(num3);
+                                queryStock.OperatingCF = Convert.ToDouble(num1);
+                                queryStock.InvestingCF = Convert.ToDouble(num2);
+                                queryStock.FinancingCF = Convert.ToDouble(num3);
+                                queryStock.Inventory = Convert.ToDouble(num3);
+                                queryStock.Capex = Convert.ToDouble(num5);
                                 queryStock.Interest = Convert.ToDouble(num_Interest);
                                 break;
                             }
@@ -238,8 +248,12 @@ namespace WebApplication2.Controllers
                                 num_Interest = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
                             if (item.TextContent.IndexOf("營業活動之淨現金流入（流出）") != -1)
                                 num1 = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
+                            if (item.TextContent.IndexOf("存貨（增加）減少") != -1)
+                                num4 = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
                             if (item.TextContent.IndexOf("投資活動之淨現金流入（流出）") != -1)
                                 num2 = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
+                            if (item.TextContent.IndexOf("取得不動產、廠房及設備") != -1)
+                                num5 = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
                             if (item.TextContent.IndexOf("籌資活動之淨現金流入（流出）") != -1)
                                 num3 = item.QuerySelectorAll("td").Skip(2 - 1).FirstOrDefault().TextContent;
                         }
