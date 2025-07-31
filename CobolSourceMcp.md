@@ -38,3 +38,10 @@ const mcpServer = new McpServer({ name: “Mainframe COBOL MCP Server”, ve
 // 4. UploadCobolSource mcpServer.registerTool( “uploadCobolSource”, { description: “將本地 COBOL 程式碼上傳至主機”, inputSchema: z.object({ dataset: z.string(), member: z.string(), content: z.string() }) }, async (input) => { // 這裡可連接主機API或模擬寫入 console.log( Uploading to ${input.dataset}(${input.member}):\n${input.content} ); return { content: { type: ‘text’, text: “Upload successful” } }; } );
 // MCP HTTP 路由 app.post(’/api/mcp’, async (req, res) => { const transport = new StreamableHTTPServerTransport(); res.on(‘close’, () => { transport.close(); mcpServer.close(); }); await mcpServer.connect(transport); await transport.handleRequest(req, res, req.body); });
 app.listen(port, () => { console.log( MCP Server running at http://localhost:${port}/api/mcp ); });
+
+
+---
+
+透過上述設計，你的 MCP Server 功能全面涵蓋了主機 COBOL 原始碼拉取、資料集與成員巡覽以及程式碼上傳，搭配 GitHub Copilot 的 Agent 模式與自然語言指令，即可組建自動化的 COBOL 源碼管理與版本控制系統。
+
+如需進一步幫助（如 Copilot 端 prompt 範例、部署 Azure 步驟等），也可以隨時告訴我。
