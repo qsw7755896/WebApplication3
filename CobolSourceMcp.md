@@ -29,3 +29,12 @@
 - 分批呼叫大型資料集樹服務，注意效能與穩定。
 
 ## 三、示範 MCP Server 範例（Node.js）
+const express = require(‘express’); const { McpServer } = require(’@modelcontextprotocol/sdk/server/mcp.js’); const { StreamableHTTPServerTransport } = require(’@modelcontextprotocol/sdk/server/streamableHttp.js’); const { z } = require(‘zod’);
+const app = express(); const port = 3000; app.use(express.json());
+const mcpServer = new McpServer({ name: “Mainframe COBOL MCP Server”, version: “1.0.0”, instructions: “提供 COBOL 源碼管理相關服務” });
+// 1. GetCobolSource mcpServer.registerTool( “getCobolSource”, { description: “取得指定 COBOL 程式原始碼”, inputSchema: z.object({ programName: z.string() }) }, async (input) => { const sourceCode =  IDENTIFICATION DIVISION.\nPROGRAM-ID. ${input.programName}.\nPROCEDURE DIVISION.\n    DISPLAY 'This is a sample COBOL program.'\n    STOP RUN.\n ; return { content: { type: ‘text’, text: sourceCode } }; } );
+// 2. GetPdsMember mcpServer.registerTool( “getPdsMember”, { description: “取得 PDS 某成員內容”, inputSchema: z.object({ dataset: z.string(), member: z.string() }) }, async (input) => { // 範例回傳固定字串 const memberContent =  * Member ${input.member} content from dataset ${input.dataset} ; return { content: { type: ‘text’, text: memberContent } }; } );
+// 3. TraversalAllDataSet mcpServer.registerTool( “traversalAllDataSet”, { description: “取得主機資料集樹狀結構 JSON”, inputSchema: z.object({ root: z.string().optional() }) }, async (input) => { // 模擬資料集樹 JSON const tree = { name: input.root ?? “root”, children: [ { name: “DATASET1”, children: { name: “MEMBER1” }, { name: “MEMBER2” } }, { name: “DATASET2”, children: [] } ] }; return { content: { type: ‘json’, json: tree } }; } );
+// 4. UploadCobolSource mcpServer.registerTool( “uploadCobolSource”, { description: “將本地 COBOL 程式碼上傳至主機”, inputSchema: z.object({ dataset: z.string(), member: z.string(), content: z.string() }) }, async (input) => { // 這裡可連接主機API或模擬寫入 console.log( Uploading to ${input.dataset}(${input.member}):\n${input.content} ); return { content: { type: ‘text’, text: “Upload successful” } }; } );
+// MCP HTTP 路由 app.post(’/api/mcp’, async (req, res) => { const transport = new StreamableHTTPServerTransport(); res.on(‘close’, () => { transport.close(); mcpServer.close(); }); await mcpServer.connect(transport); await transport.handleRequest(req, res, req.body); });
+app.listen(port, () => { console.log( MCP Server running at http://localhost:${port}/api/mcp ); });
