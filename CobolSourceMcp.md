@@ -29,15 +29,153 @@
 - 分批呼叫大型資料集樹服務，注意效能與穩定。
 
 ## 三、示範 MCP Server 範例（Node.js）
-const express = require(‘express’); const { McpServer } = require(’@modelcontextprotocol/sdk/server/mcp.js’); const { StreamableHTTPServerTransport } = require(’@modelcontextprotocol/sdk/server/streamableHttp.js’); const { z } = require(‘zod’);
-const app = express(); const port = 3000; app.use(express.json());
-const mcpServer = new McpServer({ name: “Mainframe COBOL MCP Server”, version: “1.0.0”, instructions: “提供 COBOL 源碼管理相關服務” });
-// 1. GetCobolSource mcpServer.registerTool( “getCobolSource”, { description: “取得指定 COBOL 程式原始碼”, inputSchema: z.object({ programName: z.string() }) }, async (input) => { const sourceCode =  IDENTIFICATION DIVISION.\nPROGRAM-ID. ${input.programName}.\nPROCEDURE DIVISION.\n    DISPLAY 'This is a sample COBOL program.'\n    STOP RUN.\n ; return { content: { type: ‘text’, text: sourceCode } }; } );
-// 2. GetPdsMember mcpServer.registerTool( “getPdsMember”, { description: “取得 PDS 某成員內容”, inputSchema: z.object({ dataset: z.string(), member: z.string() }) }, async (input) => { // 範例回傳固定字串 const memberContent =  * Member ${input.member} content from dataset ${input.dataset} ; return { content: { type: ‘text’, text: memberContent } }; } );
-// 3. TraversalAllDataSet mcpServer.registerTool( “traversalAllDataSet”, { description: “取得主機資料集樹狀結構 JSON”, inputSchema: z.object({ root: z.string().optional() }) }, async (input) => { // 模擬資料集樹 JSON const tree = { name: input.root ?? “root”, children: [ { name: “DATASET1”, children: { name: “MEMBER1” }, { name: “MEMBER2” } }, { name: “DATASET2”, children: [] } ] }; return { content: { type: ‘json’, json: tree } }; } );
-// 4. UploadCobolSource mcpServer.registerTool( “uploadCobolSource”, { description: “將本地 COBOL 程式碼上傳至主機”, inputSchema: z.object({ dataset: z.string(), member: z.string(), content: z.string() }) }, async (input) => { // 這裡可連接主機API或模擬寫入 console.log( Uploading to ${input.dataset}(${input.member}):\n${input.content} ); return { content: { type: ‘text’, text: “Upload successful” } }; } );
-// MCP HTTP 路由 app.post(’/api/mcp’, async (req, res) => { const transport = new StreamableHTTPServerTransport(); res.on(‘close’, () => { transport.close(); mcpServer.close(); }); await mcpServer.connect(transport); await transport.handleRequest(req, res, req.body); });
-app.listen(port, () => { console.log( MCP Server running at http://localhost:${port}/api/mcp ); });
+
+// 引入必要模組與套件
+const express = require('express');
+const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
+const { StreamableHTTPServerTransport } = require('@modelcontextprotocol/sdk/server/streamableHttp.js');
+const { z } = require('zod');
+
+const app = express();
+const port = 3000;
+
+// 允許解析 JSON 請求體
+app.use(express.json());
+
+// 建立 MCP Server 實例，設定服務名稱與版本
+const mcpServer = new McpServer({
+  name: "Mainframe COBOL MCP Server",
+  version: "1.0.0",
+  instructions: "提供主機 COBOL 原始碼管理相關服務",
+});
+
+/**
+ * 1. GetCobolSource
+ * 回傳指定 COBOL 程式的原始碼字串。
+ */
+mcpServer.registerTool(
+  "getCobolSource",
+  {
+    description: "取得指定 COBOL 程式原始碼",
+    inputSchema: z.object({
+      programName: z.string(),
+    }),
+  },
+  async (input) => {
+    const sourceCode = `
+IDENTIFICATION DIVISION.
+PROGRAM-ID. ${input.programName}.
+PROCEDURE DIVISION.
+    DISPLAY 'This is a sample COBOL program from MCP Server'.
+    STOP RUN.
+`;
+    return {
+      content: [
+        { type: 'text', text: sourceCode }
+      ]
+    };
+  }
+);
+
+/**
+ * 2. GetPdsMember
+ * 取得指定資料集(PDS)內成員的程式碼內容。
+ */
+mcpServer.registerTool(
+  "getPdsMember",
+  {
+    description: "取得 PDS 某成員內容",
+    inputSchema: z.object({
+      dataset: z.string(),
+      member: z.string(),
+    }),
+  },
+  async (input) => {
+    // 模擬從主機取得該成員的程式碼
+    const memberContent = `* PDS: ${input.dataset}, Member: ${input.member}\nDISPLAY 'Member content fetched by MCP Server.'`;
+    return {
+      content: [
+        { type: 'text', text: memberContent }
+      ]
+    };
+  }
+);
+
+/**
+ * 3. TraversalAllDataSet
+ * 遞迴掃描並返回整個主機資料集的樹狀結構 JSON。
+ */
+mcpServer.registerTool(
+  "traversalAllDataSet",
+  {
+    description: "取得主機資料集樹狀結構",
+    inputSchema: z.object({
+      root: z.string().optional(),
+    }),
+  },
+  async (input) => {
+    // 模擬樹狀結構資料（實際情況可串主機命令取得）
+    const tree = {
+      name: input.root ?? "root",
+      children: [
+        { name: "DATASET1", children: [{ name: "MEMBER1" }, { name: "MEMBER2" }] },
+        { name: "DATASET2", children: [] }
+      ]
+    };
+    return {
+      content: [
+        { type: 'json', json: tree }
+      ]
+    };
+  }
+);
+
+/**
+ * 4. UploadCobolSource
+ * 接收本地 COBOL 程式碼上傳，並模擬寫回主機資料集。
+ */
+mcpServer.registerTool(
+  "uploadCobolSource",
+  {
+    description: "將本地 COBOL 程式碼上傳至主機資料集",
+    inputSchema: z.object({
+      dataset: z.string(),
+      member: z.string(),
+      content: z.string(),
+    }),
+  },
+  async (input) => {
+    // 這裡可改為調用主機 API 或其他存儲接口
+    console.log(`Uploading COBOL source to ${input.dataset}(${input.member}):\n${input.content}`);
+    return {
+      content: [
+        { type: 'text', text: "Upload successful" }
+      ]
+    };
+  }
+);
+
+// 設定 MCP HTTP POST 路由，作為 MCP Server 的通訊端點
+app.post('/api/mcp', async (req, res) => {
+  const transport = new StreamableHTTPServerTransport();
+
+  // 請求中斷或完成時釋放資源
+  res.on('close', () => {
+    transport.close();
+    mcpServer.close();
+  });
+
+  // 連接 MCP Server 和傳輸層
+  await mcpServer.connect(transport);
+
+  // 處理 MCP 請求
+  await transport.handleRequest(req, res, req.body);
+});
+
+// 啟動 Express Web Server
+app.listen(port, () => {
+  console.log(`MCP Server running at http://localhost:${port}/api/mcp`);
+});
 
 
 ---
